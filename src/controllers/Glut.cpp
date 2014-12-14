@@ -2,7 +2,7 @@
 * Glut.cpp
 *
 *  Created on: Nov 15, 2013
-*      Author: Coert and a guy named Fronk
+*      Author: Coert and a guy named Frank
 */
 
 #include "Camera.h"
@@ -15,6 +15,7 @@
 #include <stddef.h>
 #include <cmath>
 #include <cstdlib>
+#include <ctime>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -27,8 +28,8 @@ namespace nl_uu_science_gmt
 
 	Glut* Glut::_glut;
 
-	Glut::Glut(Scene3DRenderer &s3d) :
-		_scene3d(s3d)
+	Glut::Glut(Scene3DRenderer &s3d, Tracker &trck) :
+		_scene3d(s3d), _tracker(trck)
 	{
 		// static pointer to this class so we can get to it from the static GL events
 		_glut = this;
@@ -252,6 +253,7 @@ namespace nl_uu_science_gmt
 		int key_i = strtol(string(key, key).substr(0, 1).c_str(), &p_end, 10);
 
 		Scene3DRenderer& scene3d = _glut->getScene3d();
+		Tracker& tracker = _glut->getTracker();
 		if (key_i == 0)
 		{
 			if (key == 'q' || key == 'Q')
@@ -320,7 +322,12 @@ namespace nl_uu_science_gmt
 			}
 			else if (key == 'h' || key == 'H')
 			{
-				optimizeHSV();
+				bool record = General::popup("Optimization starting", "Record the process?");
+				optimizeHSV(record);
+			}
+			else if (key == 'k' || key == 'K') {
+				// Questo è solo per testare, poi sarà cambiato con scene3d.setTracking(true) o simile
+				tracker.update(vector<Reconstructor::Voxel*>());
 			}
 		}
 		else if (key_i > 0 && key_i <= (int)scene3d.getCameras().size())
@@ -826,14 +833,13 @@ namespace nl_uu_science_gmt
 
 		// apply default translation
 		glTranslatef(0, 0, 0);
-		glPointSize(3.0f);
+		glPointSize(2.0f);
 		glBegin(GL_POINTS);
 
 		vector<Reconstructor::Voxel*> voxels = _glut->getScene3d().getReconstructor().getVisibleVoxels();
 		for (size_t v = 0; v < voxels.size(); v++)
 		{
-			Scalar color = voxels[v]->color;
-			glColor4f(color[0],color[1],color[2],1);
+			glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
 			glVertex3f((GLfloat)voxels[v]->x, (GLfloat)voxels[v]->y, (GLfloat)voxels[v]->z);
 		}
 
@@ -906,53 +912,59 @@ namespace nl_uu_science_gmt
 #endif
 	}
 
-	void Glut::optimizeHSV() {
+
+	/**
+	* Find the optimal HSV values comparing the results of the background subtraction with a groundtruth
+	*/
+	void Glut::optimizeHSV(bool record) {
 		Scene3DRenderer& scene3d = _glut->getScene3d();
 		vector<Camera*> cameras = scene3d.getCameras();
 
+		// As of now we only have groundtruths for the first camera,
+		// those seem to be enough to find good values though
 		Camera* camera = cameras[0];
 		string dataPath = camera->getDataPath() + "Frames" + PATH_SEP;
 
+		// We have more than one groundtruth so we take a random one (to add some variety)
+		srand(time(0));
 		int frameNr = rand() % 19;
 
-		Mat image = imread(dataPath + format("frame%i.jpg", frameNr));
-		Mat groundtruth = imread(dataPath + format("frame%i_mask.jpg", frameNr), CV_LOAD_IMAGE_GRAYSCALE);
-		threshold(groundtruth, groundtruth, 125, 255, CV_THRESH_BINARY);
-		Mat imageRsz, groundtruthRsz;
-		Size size = image.size();
+		Mat frame = imread(dataPath + format("frame%i.jpg", frameNr));
+		// Convert to HSV space
+		Mat frameHSV;
+		cvtColor(frame, frameHSV, CV_BGR2HSV);
 
-		resize(image, imageRsz, Size(size.width / 2, size.height / 2));
+		Mat groundtruth = imread(dataPath + format("frame%i_mask.jpg", frameNr), CV_LOAD_IMAGE_GRAYSCALE);
+		// Just because my Photoshop skills aren't the best and there are some grayish pixels on the maks files
+		threshold(groundtruth, groundtruth, 125, 255, CV_THRESH_BINARY);
+
+		// For displaying purposes only
+		Mat frameRsz, groundtruthRsz;
+		Size size = frame.size();
+		resize(frame, frameRsz, Size(size.width / 2, size.height / 2));
 		cvtColor(groundtruth, groundtruthRsz, CV_GRAY2BGR);
 		resize(groundtruthRsz, groundtruthRsz, Size(size.width / 2, size.height / 2));
-
 		Mat imageAndGroundtruth;
-		vconcat(imageRsz, groundtruthRsz, imageAndGroundtruth);
+		vconcat(frameRsz, groundtruthRsz, imageAndGroundtruth);
 
 		Scalar bestValues(0, 0, 0);
 		int bestResult = 0;
 
-		Mat hsv_image;
-		cvtColor(image, hsv_image, CV_BGR2HSV);  // from BGR to HSV color space
-
 		vector<Mat> channels;
-		split(hsv_image, channels);  // Split the HSV-channels for further analysis
-
-		VideoCapture originalVideo = camera->getVideo();
-		// Get codec type
-		int codec = static_cast<int>(originalVideo.get(CV_CAP_PROP_FOURCC));
-		char EXT[] = { (char)(codec & 0XFF), (char)((codec & 0XFF00) >> 8), (char)((codec & 0XFF0000) >> 16), (char)((codec & 0XFF000000) >> 24), 0 };
-
-		cout << EXT;
-		// Init output video
-		VideoWriter outputVideo;
-		outputVideo.open("outputVideo.avi", codec, originalVideo.get(CV_CAP_PROP_FPS), Size(size.width * 3 / 2, size.height), true);
-
-		cout << "Optimizing S and V values. Please wait..." << endl;
+		split(frameHSV, channels);
 
 		bool quit = false;
 
-		int h = 19;
-		//for (int h = 0; !quit && h < 255; h++) {
+		int h = 0;
+
+		// Init output video
+		VideoWriter outputVideo;
+		outputVideo.open("data\outputVideo.avi", CV_FOURCC('X', 'V', 'I', 'D'), 50, Size(size.width * 3 / 2, size.height), true);
+
+		cout << "Optimizing S and V values. Please wait..." << endl;
+
+		// FIRST LOOP:
+		// check all values of S and V with H=0
 		for (int s = 0; !quit && s < 255; s++) {
 			for (int v = 0; !quit && v < 255; v++) {
 
@@ -976,37 +988,74 @@ namespace nl_uu_science_gmt
 
 				int nonZeroEls = countNonZero(difference);
 
+				// The foreground should be the opposite of the groundtruth
+				// so a perfect match would give a completely white difference
+				// thus we want to maximize the non-zero elements of the difference
 				if (nonZeroEls > bestResult) {
 					bestValues = Scalar(h, s, v);
 					bestResult = nonZeroEls;
-					cout << "New best: " << bestValues[0] << ", " << bestValues[1] << ", " << bestValues[2] << " (" << nonZeroEls << ")" << endl;
+					//cout << "New best: " << bestValues[0] << ", " << bestValues[1] << ", " << bestValues[2] << " (" << nonZeroEls << ")" << endl;
 				}
 
 				Mat foregroundBGR, finalImage;
 				cvtColor(foreground, foregroundBGR, CV_GRAY2BGR);
 				hconcat(foregroundBGR, imageAndGroundtruth, finalImage);
 
-				int hb = bestValues[0];
-				int sb = bestValues[1];
-				int vb = bestValues[2];
+				quit = drawOptimization(finalImage, Scalar(h, s, v), bestValues);
 
-				putText(finalImage, "Optimization in progress... (press q to abort)", Point(10, 20), 1, 1, Scalar(0, 0, 255));
-				putText(finalImage, format("H:%i S:%i V:%i", h, s, v), Point(10, 40), 1, 1, Scalar(0, 0, 255), 2);
-				putText(finalImage, "Best so far:", Point(10, size.height - 20), 1, 1, Scalar(0, 0, 255));
-				putText(finalImage, format("H:%i S:%i V:%i", hb, sb, vb), Point(10, size.height - 5), 1, 1, Scalar(0, 0, 255));
-				putText(finalImage, "Original frame", Point(size.width + 10, 20), 1, 1, Scalar(0, 0, 255));
-				putText(finalImage, "Groundtruth", Point(size.width + 10, size.height / 2 + 20), 1, 1, Scalar(0, 0, 255));
-
-				imshow("HSV optimization", finalImage);
-				// Record
-				outputVideo << finalImage;
-
-				int key = waitKey(5);
-				if (key == 'q' || key == 'Q')
-					quit = true;
+				if (record)
+					outputVideo << finalImage;
 			}
 		}
-		//}
+		h = 1;
+
+		// SECOND LOOP:
+		// Check all possible values of H, with S and V remaining close to the values found during the first loop
+		for (h; !quit && h < 255; h++) {
+			for (int s = bestValues[1] - 15; !quit && s < bestValues[1] + 15; s++) {
+				for (int v = bestValues[2] - 15; !quit && v < bestValues[2] + 15; v++) {
+
+					// Background subtraction H
+					Mat tmp, foreground, background;
+					absdiff(channels[0], camera->getBgHsvChannels().at(0), tmp);
+					threshold(tmp, foreground, h, 255, CV_THRESH_BINARY);
+
+					// Background subtraction S
+					absdiff(channels[1], camera->getBgHsvChannels().at(1), tmp);
+					threshold(tmp, background, s, 255, CV_THRESH_BINARY);
+					bitwise_and(foreground, background, foreground);
+
+					// Background subtraction V
+					absdiff(channels[2], camera->getBgHsvChannels().at(2), tmp);
+					threshold(tmp, background, v, 255, CV_THRESH_BINARY);
+					bitwise_or(foreground, background, foreground);
+
+					Mat difference;
+					absdiff(foreground, groundtruth, difference);
+
+					int nonZeroEls = countNonZero(difference);
+
+					// The foreground should be the opposite of the groundtruth
+					// so a perfect match would give a completely white difference
+					// thus we want to maximize the non-zero elements of the difference
+					if (nonZeroEls > bestResult) {
+						bestValues = Scalar(h, s, v);
+						bestResult = nonZeroEls;
+						//cout << "New best: " << bestValues[0] << ", " << bestValues[1] << ", " << bestValues[2] << " (" << nonZeroEls << ")" << endl;
+					}
+
+					Mat foregroundBGR, finalImage;
+					cvtColor(foreground, foregroundBGR, CV_GRAY2BGR);
+					hconcat(foregroundBGR, imageAndGroundtruth, finalImage);
+
+					quit = drawOptimization(finalImage, Scalar(h, s, v), bestValues);
+
+					if (record)
+						outputVideo << finalImage;
+				}
+			}
+
+		}
 
 		if (quit)
 			cout << "Optimization aborted. Best values so far:";
@@ -1017,11 +1066,40 @@ namespace nl_uu_science_gmt
 		cout << " S=" << bestValues[1];
 		cout << " V=" << bestValues[2] << endl;
 
+		// Update framework with found values
 		setTrackbarPos("H", VIDEO_WINDOW, bestValues[0]);
 		setTrackbarPos("S", VIDEO_WINDOW, bestValues[1]);
 		setTrackbarPos("V", VIDEO_WINDOW, bestValues[2]);
 
 		destroyWindow("HSV optimization");
+	}
+
+	bool Glut::drawOptimization(Mat finalImage, const Scalar& currentValues, const Scalar& bestValues) {
+
+		Size size = finalImage.size();
+
+		int h = currentValues[0];
+		int s = currentValues[1];
+		int v = currentValues[2];
+		int hb = bestValues[0];
+		int sb = bestValues[1];
+		int vb = bestValues[2];
+
+		putText(finalImage, "Optimization in progress... (press q to abort)", Point(10, 20), 1, 1, Scalar(0, 0, 255));
+		putText(finalImage, format("H:%i S:%i V:%i", h, s, v), Point(10, 40), 1, 1, Scalar(0, 0, 255), 2);
+		putText(finalImage, "Best so far:", Point(10, size.height - 20), 1, 1, Scalar(0, 0, 255));
+		putText(finalImage, format("H:%i S:%i V:%i", hb, sb, vb), Point(10, size.height - 5), 1, 1, Scalar(0, 0, 255));
+		putText(finalImage, "Original frame", Point(size.width * 2 / 3 + 10, 20), 1, 1, Scalar(0, 0, 255));
+		putText(finalImage, "Groundtruth", Point(size.width * 2 / 3 + 10, size.height / 2 + 20), 1, 1, Scalar(0, 0, 255));
+
+		imshow("HSV optimization", finalImage);
+
+		// This process takes a lot so sometimes we want to abort without having to kill the whole framework
+		int key = waitKey(3);
+		if (key == 'q' || key == 'Q')
+			return true;
+
+		return false;
 	}
 
 } /* namespace nl_uu_science_gmt */
