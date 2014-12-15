@@ -59,8 +59,45 @@ namespace nl_uu_science_gmt
 			Reconstructor &rec = _scene3d.getReconstructor();
 
 			rec.update();
-			
+
 			vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
+			
+			Mat labels;
+			
+			Mat coordinates;
+			
+			for (int i = 0; i < voxels.size(); i++){
+				coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
+			}
+
+			/*Mat coordinatesMat;
+			for (int i = 0; i < voxels.size(); i++){
+				coordinatesMat.push_back(make_pair(voxels[i]->x, voxels[i]->y));
+			}*/
+			TermCriteria criteria;
+			criteria.maxCount = 10;
+			//Mat coordinatesMat(coordinates);
+			kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
+			// cout << labels;
+
+			for (int i = 0; i < voxels.size(); i++){
+				Reconstructor::Voxel* v = voxels[i];
+				switch (labels.at<int>(i)) {
+				case 0:
+					v->color = Scalar(0.f,0.f,0.f,1);
+					break;
+				case 1:
+					v->color = Scalar(1.f, 0.f, 0.f, 1);
+					break;
+				case 2:
+					v->color = Scalar(0.f, 1.f, 0.f, 1);
+					break;
+				case 3:
+					v->color = Scalar(0.f, 0.f, 1.f, 1);
+					break;
+				}
+			}
+
 			// create color model from selected frame
 		}
 

@@ -839,7 +839,10 @@ namespace nl_uu_science_gmt
 		vector<Reconstructor::Voxel*> voxels = _glut->getScene3d().getReconstructor().getVisibleVoxels();
 		for (size_t v = 0; v < voxels.size(); v++)
 		{
-			glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
+			// glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
+			Scalar color = voxels[v]->color;
+
+			glColor4f(color[0],color[1],color[2],color[3]);
 			glVertex3f((GLfloat)voxels[v]->x, (GLfloat)voxels[v]->y, (GLfloat)voxels[v]->z);
 		}
 

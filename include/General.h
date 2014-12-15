@@ -63,6 +63,9 @@ public:
 	static const std::string FourPersonsVideo;
 
 	static bool fexists(const std::string &);
+
+	static bool popup(const std::string &, const std::string &);
+	static void popupCallback(int, int, int, int, void *);
 };
 
 } /* namespace nl_uu_science_gmt */
