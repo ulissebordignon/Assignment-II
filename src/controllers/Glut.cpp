@@ -326,8 +326,8 @@ namespace nl_uu_science_gmt
 				optimizeHSV(record);
 			}
 			else if (key == 'k' || key == 'K') {
-				// Questo è solo per testare, poi sarà cambiato con scene3d.setTracking(true) o simile
-				tracker.update(vector<Reconstructor::Voxel*>());
+				tracker.toggleActive();
+				//tracker.update(vector<Reconstructor::Voxel*>());
 			}
 		}
 		else if (key_i > 0 && key_i <= (int)scene3d.getCameras().size())
@@ -565,6 +565,7 @@ namespace nl_uu_science_gmt
 		keyboard(key, 0, 0);  // call glut key handler :)
 
 		Scene3DRenderer& scene3d = _glut->getScene3d();
+		Tracker& tracker = _glut->getTracker();
 		if (scene3d.isQuit())
 		{
 			// Quit signaled
@@ -594,6 +595,8 @@ namespace nl_uu_science_gmt
 			// If the current frame is different from the last iteration update stuff
 			scene3d.processFrame();
 			scene3d.getReconstructor().update();
+			if (tracker.isActive())
+				tracker.update();
 			scene3d.setPreviousFrame(scene3d.getCurrentFrame());
 		}
 		else if (scene3d.getHThreshold() != scene3d.getPHThreshold() || scene3d.getSThreshold() != scene3d.getPSThreshold()

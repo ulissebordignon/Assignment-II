@@ -14,10 +14,9 @@
 #include <Windows.h>
 #endif
 #include <vector>
+#include <string>
 
 #include "General.h"
-#include "Reconstructor.h"
-#include "Scene3DRenderer.h"
 #include "Camera.h"
 
 namespace nl_uu_science_gmt
@@ -27,36 +26,20 @@ namespace nl_uu_science_gmt
 	{
 		const std::vector<Camera*> &_cameras;
 		const std::string _data_path;
-		Scene3DRenderer &_scene3d;
-		cv::Mat _color_model;
-		bool _active;
-
-		void createColorModel();
+		cv::Mat* _color_model;
 
 #ifdef _WIN32
 		HDC _hDC;
 #endif
 
 	public:
-		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&);
+		Tracker(const std::vector<Camera*> &, const std::string&);
 
-		void update();
+		void update(std::vector<Reconstructor::Voxel*>);
 
 		const std::vector<Camera*>& getCameras() const
 		{
 			return _cameras;
-		}
-
-		bool isActive() {
-			return _active;
-		}
-
-		bool setActive(bool active) {
-			_active = active;
-		}
-
-		void toggleActive() {
-			_active = !_active;
 		}
 	};
 

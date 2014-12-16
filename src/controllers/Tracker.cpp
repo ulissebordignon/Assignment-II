@@ -21,55 +21,50 @@ namespace nl_uu_science_gmt
 	* Voxel reconstruction class
 	*/
 	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d) :
-		_cameras(cs), _data_path(dp), _scene3d(s3d)
+		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false)
 	{
 		// if file exists load color model
 	}
 
-	void Tracker::update(const vector<Reconstructor::Voxel*>& voxels) {
-		if (_color_model.empty()) {
+	void Tracker::update() {
+		if (_color_model.empty())
+			createColorModel();
 
-			string winName = "Frame selection";
-			namedWindow(winName);
+		// update voxels' colors based on colr model
 
-			int selectedFrame = 0;
+	}
 
-			int k = 0;
-			while (k != 'c'){
-				Mat image = _cameras[0]->getVideoFrame(selectedFrame);
-				hconcat(image, _cameras[1]->getVideoFrame(selectedFrame), image);
-				Mat tmpImage = _cameras[2]->getVideoFrame(selectedFrame);
-				hconcat(tmpImage, _cameras[3]->getVideoFrame(selectedFrame), tmpImage);
+	void Tracker::createColorModel() {
+		string winName = "Frame selection";
+		namedWindow(winName);
 
-				vconcat(image, tmpImage, image);
+		int selectedFrame = 0;
 
-				resize(image, image, Size(), 0.5, 0.5);
+		int k = 0;
+		while (k != 'c'){
+			Mat image = _cameras[0]->getVideoFrame(selectedFrame);
+			hconcat(image, _cameras[1]->getVideoFrame(selectedFrame), image);
+			Mat tmpImage = _cameras[2]->getVideoFrame(selectedFrame);
+			hconcat(tmpImage, _cameras[3]->getVideoFrame(selectedFrame), tmpImage);
 
-				imshow(winName, image);
-				createTrackbar("Frame", winName, &selectedFrame, _cameras.front()->getFramesAmount());
+			vconcat(image, tmpImage, image);
 
-				k = waitKey(15);
-			}
+			resize(image, image, Size(), 0.5, 0.5);
 
-			destroyWindow(winName);
+			imshow(winName, image);
+			createTrackbar("Frame", winName, &selectedFrame, _cameras.front()->getFramesAmount());
 
-			for (int i = 0; i < _cameras.size(); i++)
-				_scene3d.processForeground(_cameras[i]);
+			k = waitKey(15);
+		}
 
-			Reconstructor &rec = _scene3d.getReconstructor();
+		destroyWindow(winName);
 
-			rec.update();
+		for (int i = 0; i < _cameras.size(); i++)
+			_scene3d.processForeground(_cameras[i]);
 
-			vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
-			
-			Mat labels;
-			
-			Mat coordinates;
-			
-			for (int i = 0; i < voxels.size(); i++){
-				coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
-			}
+		Reconstructor &rec = _scene3d.getReconstructor();
 
+<<<<<<< HEAD
 			TermCriteria criteria;
 			criteria.maxCount = 10;
 
@@ -103,10 +98,44 @@ namespace nl_uu_science_gmt
 			}
 
 			// create color model from selected frame
+=======
+		rec.update();
+
+		vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
+
+		Mat labels;
+
+		Mat coordinates;
+
+		for (int i = 0; i < voxels.size(); i++){
+			coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
+>>>>>>> origin/master
 		}
 
-		// update voxels' colors based on colr model
+		TermCriteria criteria;
+		criteria.maxCount = 10;
+		kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
 
+		for (int i = 0; i < voxels.size(); i++){
+			Reconstructor::Voxel* v = voxels[i];
+			switch (labels.at<int>(i)) {
+			case 0:
+				v->color = Scalar(0.f, 0.f, 0.f, 1);
+				break;
+			case 1:
+				v->color = Scalar(1.f, 0.f, 0.f, 1);
+				break;
+			case 2:
+				v->color = Scalar(0.f, 1.f, 0.f, 1);
+				break;
+			case 3:
+				v->color = Scalar(0.f, 0.f, 1.f, 1);
+				break;
+			}
+		}
+
+		// create color model from selected frame
 	}
+
 
 } /* namespace nl_uu_science_gmt */
