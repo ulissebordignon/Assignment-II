@@ -70,15 +70,10 @@ namespace nl_uu_science_gmt
 				coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
 			}
 
-			/*Mat coordinatesMat;
-			for (int i = 0; i < voxels.size(); i++){
-				coordinatesMat.push_back(make_pair(voxels[i]->x, voxels[i]->y));
-			}*/
 			TermCriteria criteria;
 			criteria.maxCount = 10;
-			//Mat coordinatesMat(coordinates);
+
 			kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
-			// cout << labels;
 
 			for (int i = 0; i < voxels.size(); i++){
 				Reconstructor::Voxel* v = voxels[i];
@@ -96,6 +91,15 @@ namespace nl_uu_science_gmt
 					v->color = Scalar(0.f, 0.f, 1.f, 1);
 					break;
 				}
+			}
+
+
+
+			for (int i = 0; i < voxels.size(); i++){
+
+				for (int j = 0; j < _cameras.size(); j++)
+					_cameras[j]->projectOnView(Point3f(voxels[i]->x, voxels[i]->y, voxels[i]->z), _cameras[j]->getRotationValues(), _cameras[j]->getTranslationValues(), _cameras[j]->getCameraMatrix(), _cameras[j]->getDistortionCoefficients());
+
 			}
 
 			// create color model from selected frame
