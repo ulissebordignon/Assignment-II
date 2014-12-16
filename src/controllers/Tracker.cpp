@@ -64,41 +64,6 @@ namespace nl_uu_science_gmt
 
 		Reconstructor &rec = _scene3d.getReconstructor();
 
-<<<<<<< HEAD
-			TermCriteria criteria;
-			criteria.maxCount = 10;
-
-			kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
-
-			for (int i = 0; i < voxels.size(); i++){
-				Reconstructor::Voxel* v = voxels[i];
-				switch (labels.at<int>(i)) {
-				case 0:
-					v->color = Scalar(0.f,0.f,0.f,1);
-					break;
-				case 1:
-					v->color = Scalar(1.f, 0.f, 0.f, 1);
-					break;
-				case 2:
-					v->color = Scalar(0.f, 1.f, 0.f, 1);
-					break;
-				case 3:
-					v->color = Scalar(0.f, 0.f, 1.f, 1);
-					break;
-				}
-			}
-
-
-
-			for (int i = 0; i < voxels.size(); i++){
-
-				for (int j = 0; j < _cameras.size(); j++)
-					_cameras[j]->projectOnView(Point3f(voxels[i]->x, voxels[i]->y, voxels[i]->z), _cameras[j]->getRotationValues(), _cameras[j]->getTranslationValues(), _cameras[j]->getCameraMatrix(), _cameras[j]->getDistortionCoefficients());
-
-			}
-
-			// create color model from selected frame
-=======
 		rec.update();
 
 		vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
@@ -107,20 +72,19 @@ namespace nl_uu_science_gmt
 
 		Mat coordinates;
 
-		for (int i = 0; i < voxels.size(); i++){
+		for (int i = 0; i < voxels.size(); i++)
 			coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
->>>>>>> origin/master
-		}
 
 		TermCriteria criteria;
 		criteria.maxCount = 10;
+
 		kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
 
 		for (int i = 0; i < voxels.size(); i++){
 			Reconstructor::Voxel* v = voxels[i];
 			switch (labels.at<int>(i)) {
 			case 0:
-				v->color = Scalar(0.f, 0.f, 0.f, 1);
+				v->color = Scalar(0.f,0.f,0.f,1);
 				break;
 			case 1:
 				v->color = Scalar(1.f, 0.f, 0.f, 1);
@@ -133,8 +97,18 @@ namespace nl_uu_science_gmt
 				break;
 			}
 		}
-
+		
 		// create color model from selected frame
+
+		/*		!!! SUPER PESANTE !!!	
+		for (int i = 0; i < voxels.size(); i++)
+
+			for (int j = 0; j < _cameras.size(); j++)
+
+				_cameras[j]->projectOnView(Point3f(voxels[i]->x, voxels[i]->y, voxels[i]->z),
+				_cameras[j]->getRotationValues(), _cameras[j]->getTranslationValues(),
+				_cameras[j]->getCameraMatrix(), _cameras[j]->getDistortionCoefficients());*/
+
 	}
 
 
