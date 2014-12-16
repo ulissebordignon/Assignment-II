@@ -100,14 +100,69 @@ namespace nl_uu_science_gmt
 		
 		// create color model from selected frame
 
-		/*		!!! SUPER PESANTE !!!	
-		for (int i = 0; i < voxels.size(); i++)
+		Mat visibleVoxelsMat;
 
-			for (int j = 0; j < _cameras.size(); j++)
+		// look for non-occluded voxels for each view
+		for (int i = 0; i < _cameras.size(); i++){
 
-				_cameras[j]->projectOnView(Point3f(voxels[i]->x, voxels[i]->y, voxels[i]->z),
-				_cameras[j]->getRotationValues(), _cameras[j]->getTranslationValues(),
-				_cameras[j]->getCameraMatrix(), _cameras[j]->getDistortionCoefficients());*/
+			vector<Reconstructor::Voxel*> visibleVoxels;
+			vector<Point2i> voxelProjections;
+
+			Point3f camLocation = _cameras[i]->getCameraLocation();
+
+			// for each voxel
+			for (int j = 0; j < voxels.size(); j++){
+				
+				// determine the projection
+				Point2i projection;
+
+				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z),
+					_cameras[i]->getRotationValues(), _cameras[i]->getTranslationValues(),
+					_cameras[i]->getCameraMatrix(), _cameras[i]->getDistortionCoefficients());
+
+				// determine if the projection has already been used
+				for (int k = 0; k < voxelProjections.size(); k++){
+
+					if (projection == voxelProjections[k]){
+
+						float distOld, distNew;
+						// distance from old voxel to camera
+						distOld = sqrt(pow(visibleVoxels[k]->x - camLocation.x, 2) +
+							pow(visibleVoxels[k]->y - camLocation.y, 2) +
+							pow(visibleVoxels[k]->z - camLocation.z, 2));
+						// distance from new voxel to camera
+						distNew =
+							sqrt(pow(voxels[j]->x - camLocation.x, 2) +
+							pow(voxels[j]->y - camLocation.y, 2) +
+							pow(voxels[j]->z - camLocation.z, 2));
+						// if it has, and the new voxel is closer to the camera than the old one, substitute
+						if (distOld > distNew)
+							visibleVoxels[k] = voxels[j];
+
+						break;
+					}
+				}
+
+				if (k == voxelProjections.size()){
+					// if it hasn't, add projection and projected voxel to the respective vectors
+					visibleVoxels.push_back(voxels[i]);
+					voxelProjections.push_back(projection);
+				}
+
+			} // end voxel loop
+
+			visibleVoxelsMat.push_back(visibleVoxels);
+
+		} // end camera loop
+
+		// create color model for each label, using all views
+		for (int i = 0; i < _cameras.size(); i++){
+			vector<Reconstructor::Voxel*> currentVoxels = visibleVoxelsMat.at< vector<Reconstructor::Voxel*> >(i);
+
+			for (int j = 0; i < currentVoxels.size(); j++){
+
+			}
+		}
 
 	}
 
