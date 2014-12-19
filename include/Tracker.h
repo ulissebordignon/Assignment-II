@@ -30,6 +30,7 @@ namespace nl_uu_science_gmt
 		Scene3DRenderer &_scene3d;
 		cv::Mat _color_model;
 		bool _active;
+		int _clusters_number;
 
 		void createColorModel();
 
@@ -38,7 +39,7 @@ namespace nl_uu_science_gmt
 #endif
 
 	public:
-		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&);
+		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int);
 
 		void update();
 

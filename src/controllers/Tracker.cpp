@@ -20,8 +20,8 @@ namespace nl_uu_science_gmt
 	/**
 	* Voxel reconstruction class
 	*/
-	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d) :
-		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false)
+	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn = 4) :
+		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
 		// if file exists load color model
 	}
@@ -101,7 +101,7 @@ namespace nl_uu_science_gmt
 		
 		// create color model from selected frame
 
-		Mat visibleVoxelsMat;
+		vector<vector<pair<Reconstructor::Voxel*, Point2i>>> visibleVoxelsMat;
 
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
@@ -116,9 +116,7 @@ namespace nl_uu_science_gmt
 				// determine the projection
 				Point2i projection;
 
-				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z),
-					_cameras[i]->getRotationValues(), _cameras[i]->getTranslationValues(),
-					_cameras[i]->getCameraMatrix(), _cameras[i]->getDistortionCoefficients());
+				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z));
 				
 				// determine if the projection has already been used
 				for (int k = 0; k < visibleVoxels.size(); k++){
@@ -141,13 +139,16 @@ namespace nl_uu_science_gmt
 						break;
 					}
 
-					if (k == visibleVoxels.size())
+					if (k == visibleVoxels.size()) {
 						// if it hasn't, add projection and projected voxel to the respective vectors
 						visibleVoxels.push_back(make_pair(voxels[i], projection));
+						break;
+					}
 
 				} // end visible voxels loop
 
 			} // end voxel loop
+
 			visibleVoxelsMat.push_back(visibleVoxels);
 
 		} // end camera loop
@@ -157,7 +158,7 @@ namespace nl_uu_science_gmt
 		Mat colorModel;
 
 		for (int i = 0; i < _cameras.size(); i++){
-			vector<pair<Reconstructor::Voxel*, Point2i>> currentVoxels = visibleVoxelsMat.at< vector<pair<Reconstructor::Voxel*, Point2i>> >(i);
+			vector<pair<Reconstructor::Voxel*, Point2i>> currentVoxels = visibleVoxelsMat[i];
 
 			for (int j = 0; j < currentVoxels.size(); j++){
 				

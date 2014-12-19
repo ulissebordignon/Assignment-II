@@ -145,26 +145,6 @@ public:
 	{
 		return _camera_plane;
 	}
-
-	const cv::Mat& getCameraMatrix() const
-	{
-		return _camera_matrix;
-	}
-	
-	const cv::Mat& getDistortionCoefficients() const
-	{
-		return _distortion_coeffs;
-	}
-
-	const cv::Mat& getRotationValues() const
-	{
-		return _rotation_values;
-	}
-
-	const cv::Mat& getTranslationValues() const
-	{
-		return _translation_values;
-	}
 };
 
 } /* namespace nl_uu_science_gmt */
