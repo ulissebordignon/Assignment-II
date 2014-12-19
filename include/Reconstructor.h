@@ -28,7 +28,7 @@ class Reconstructor
 public:
 	struct Voxel
 	{
-		int x, y, z;
+		int x, y, z, label;
 		cv::Scalar color;
 		std::vector<cv::Point> camera_projection;
 		std::vector<int> valid_camera_projection;

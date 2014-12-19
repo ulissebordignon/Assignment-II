@@ -81,7 +81,7 @@ namespace nl_uu_science_gmt
 		_corners.push_back(new Point3f((float)xR, (float)yR, (float)zR));
 		_corners.push_back(new Point3f((float)xR, (float)yL, (float)zR));
 
-		cout << "Initializing voxels";
+		cout << "Initializing voxels" << endl;
 
 		// Acquire some memory for efficiency
 		_voxels.resize(_voxels_amount);

@@ -79,12 +79,13 @@ namespace nl_uu_science_gmt
 		criteria.maxCount = 10;
 
 		kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
-
+		
 		for (int i = 0; i < voxels.size(); i++){
 			Reconstructor::Voxel* v = voxels[i];
+
 			switch (labels.at<int>(i)) {
 			case 0:
-				v->color = Scalar(0.f,0.f,0.f,1);
+				v->color = Scalar(0.f, 0.f, 0.f, 1);
 				break;
 			case 1:
 				v->color = Scalar(1.f, 0.f, 0.f, 1);
@@ -105,8 +106,7 @@ namespace nl_uu_science_gmt
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<Reconstructor::Voxel*> visibleVoxels;
-			vector<Point2i> voxelProjections;
+			vector<pair<Reconstructor::Voxel*, Point2i>> visibleVoxels;
 
 			Point3f camLocation = _cameras[i]->getCameraLocation();
 
@@ -119,17 +119,16 @@ namespace nl_uu_science_gmt
 				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z),
 					_cameras[i]->getRotationValues(), _cameras[i]->getTranslationValues(),
 					_cameras[i]->getCameraMatrix(), _cameras[i]->getDistortionCoefficients());
-
+				
 				// determine if the projection has already been used
-				for (int k = 0; k < voxelProjections.size(); k++){
-
-					if (projection == voxelProjections[k]){
+				for (int k = 0; k < visibleVoxels.size(); k++){
+					if (projection == visibleVoxels[k].second){
 
 						float distOld, distNew;
 						// distance from old voxel to camera
-						distOld = sqrt(pow(visibleVoxels[k]->x - camLocation.x, 2) +
-							pow(visibleVoxels[k]->y - camLocation.y, 2) +
-							pow(visibleVoxels[k]->z - camLocation.z, 2));
+						distOld = sqrt(pow(visibleVoxels[k].first->x - camLocation.x, 2) +
+							pow(visibleVoxels[k].first->y - camLocation.y, 2) +
+							pow(visibleVoxels[k].first->z - camLocation.z, 2));
 						// distance from new voxel to camera
 						distNew =
 							sqrt(pow(voxels[j]->x - camLocation.x, 2) +
@@ -137,30 +136,33 @@ namespace nl_uu_science_gmt
 							pow(voxels[j]->z - camLocation.z, 2));
 						// if it has, and the new voxel is closer to the camera than the old one, substitute
 						if (distOld > distNew)
-							visibleVoxels[k] = voxels[j];
+							visibleVoxels[k].first = voxels[j];
 
 						break;
 					}
-				}
 
-				if (k == voxelProjections.size()){
-					// if it hasn't, add projection and projected voxel to the respective vectors
-					visibleVoxels.push_back(voxels[i]);
-					voxelProjections.push_back(projection);
-				}
+					if (k == visibleVoxels.size())
+						// if it hasn't, add projection and projected voxel to the respective vectors
+						visibleVoxels.push_back(make_pair(voxels[i], projection));
+
+				} // end visible voxels loop
 
 			} // end voxel loop
-
 			visibleVoxelsMat.push_back(visibleVoxels);
 
 		} // end camera loop
 
 		// create color model for each label, using all views
+
+		Mat colorModel;
+
 		for (int i = 0; i < _cameras.size(); i++){
-			vector<Reconstructor::Voxel*> currentVoxels = visibleVoxelsMat.at< vector<Reconstructor::Voxel*> >(i);
+			vector<pair<Reconstructor::Voxel*, Point2i>> currentVoxels = visibleVoxelsMat.at< vector<pair<Reconstructor::Voxel*, Point2i>> >(i);
 
-			for (int j = 0; i < currentVoxels.size(); j++){
-
+			for (int j = 0; j < currentVoxels.size(); j++){
+				
+				Reconstructor::Voxel* v = currentVoxels[j].first;
+				
 			}
 		}
 
