@@ -158,11 +158,27 @@ namespace nl_uu_science_gmt
 		Mat colorModel;
 
 		for (int i = 0; i < _cameras.size(); i++){
+
 			vector<pair<Reconstructor::Voxel*, Point2i>> currentVoxels = visibleVoxelsMat[i];
 
+			// vector that stores the color bins 
+			vector<int> colorBins;
 			for (int j = 0; j < currentVoxels.size(); j++){
 				
 				Reconstructor::Voxel* v = currentVoxels[j].first;
+
+				if (v->color == Scalar(0.f, 0.f, 0.f, 1)){
+
+				}
+				else if (v->color == Scalar(1.f, 0.f, 0.f, 1)){
+
+				}
+				else if (v->color == Scalar(0.f, 1.f, 0.f, 1)){
+
+				}
+				else if (v->color == Scalar(0.f, 0.f, 1.f, 1)){
+
+				}
 				
 			}
 		}
