@@ -25,6 +25,14 @@ namespace nl_uu_science_gmt
 
 	class Tracker
 	{
+	public:
+		struct VoxelAttributes
+		{
+			Reconstructor::Voxel* voxel;
+			Point2i projection;
+			int label;
+		};
+
 		const std::vector<Camera*> &_cameras;
 		const std::string _data_path;
 		Scene3DRenderer &_scene3d;
@@ -33,10 +41,6 @@ namespace nl_uu_science_gmt
 		int _clusters_number;
 
 		void createColorModel();
-
-#ifdef _WIN32
-		HDC _hDC;
-#endif
 
 	public:
 		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int);

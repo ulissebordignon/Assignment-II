@@ -80,33 +80,14 @@ namespace nl_uu_science_gmt
 
 		kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
 		
-		for (int i = 0; i < voxels.size(); i++){
-			Reconstructor::Voxel* v = voxels[i];
-
-			switch (labels.at<int>(i)) {
-			case 0:
-				v->color = Scalar(0.f, 0.f, 0.f, 1);
-				break;
-			case 1:
-				v->color = Scalar(1.f, 0.f, 0.f, 1);
-				break;
-			case 2:
-				v->color = Scalar(0.f, 1.f, 0.f, 1);
-				break;
-			case 3:
-				v->color = Scalar(0.f, 0.f, 1.f, 1);
-				break;
-			}
-		}
-		
 		// create color model from selected frame
 
-		vector<vector<pair<Reconstructor::Voxel*, Point2i>>> visibleVoxelsMat;
+		vector<vector<VoxelAttributes>> visibleVoxelsMat;
 
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<pair<Reconstructor::Voxel*, Point2i>> visibleVoxels;
+			vector<VoxelAttributes> visibleVoxels;
 
 			Point3f camLocation = _cameras[i]->getCameraLocation();
 
@@ -120,28 +101,34 @@ namespace nl_uu_science_gmt
 				
 				// determine if the projection has already been used
 				for (int k = 0; k < visibleVoxels.size(); k++){
-					if (projection == visibleVoxels[k].second){
+					if (projection == visibleVoxels[k].projection){
 
 						float distOld, distNew;
 						// distance from old voxel to camera
-						distOld = sqrt(pow(visibleVoxels[k].first->x - camLocation.x, 2) +
-							pow(visibleVoxels[k].first->y - camLocation.y, 2) +
-							pow(visibleVoxels[k].first->z - camLocation.z, 2));
+						distOld = sqrt(pow(visibleVoxels[k].voxel->x - camLocation.x, 2) +
+							pow(visibleVoxels[k].voxel->y - camLocation.y, 2) +
+							pow(visibleVoxels[k].voxel->z - camLocation.z, 2));
 						// distance from new voxel to camera
 						distNew =
 							sqrt(pow(voxels[j]->x - camLocation.x, 2) +
 							pow(voxels[j]->y - camLocation.y, 2) +
 							pow(voxels[j]->z - camLocation.z, 2));
 						// if it has, and the new voxel is closer to the camera than the old one, substitute
-						if (distOld > distNew)
-							visibleVoxels[k].first = voxels[j];
+						if (distOld > distNew) {
+							visibleVoxels[k].voxel = voxels[j];
+							visibleVoxels[k].label = labels.at<int>(j);
+						}
 
 						break;
 					}
 
 					if (k == visibleVoxels.size()) {
+						VoxelAttributes va;
+						va.voxel = voxels[j];
+						va.projection = projection;
+						va.label = labels.at<int>(j);
 						// if it hasn't, add projection and projected voxel to the respective vectors
-						visibleVoxels.push_back(make_pair(voxels[i], projection));
+						visibleVoxels.push_back(va);
 						break;
 					}
 
@@ -159,26 +146,13 @@ namespace nl_uu_science_gmt
 
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<pair<Reconstructor::Voxel*, Point2i>> currentVoxels = visibleVoxelsMat[i];
+			vector<VoxelAttributes> currentVoxels = visibleVoxelsMat[i];
 
 			// vector that stores the color bins 
 			vector<int> colorBins;
 			for (int j = 0; j < currentVoxels.size(); j++){
 				
-				Reconstructor::Voxel* v = currentVoxels[j].first;
-
-				if (v->color == Scalar(0.f, 0.f, 0.f, 1)){
-
-				}
-				else if (v->color == Scalar(1.f, 0.f, 0.f, 1)){
-
-				}
-				else if (v->color == Scalar(0.f, 1.f, 0.f, 1)){
-
-				}
-				else if (v->color == Scalar(0.f, 0.f, 1.f, 1)){
-
-				}
+				Reconstructor::Voxel* v = currentVoxels[j].voxel;
 				
 			}
 		}
