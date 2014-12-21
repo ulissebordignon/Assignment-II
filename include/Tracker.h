@@ -29,7 +29,7 @@ namespace nl_uu_science_gmt
 		struct VoxelAttributes
 		{
 			Reconstructor::Voxel* voxel;
-			Point2i projection;
+			cv::Point2i projection;
 			int label;
 		};
 
@@ -43,7 +43,7 @@ namespace nl_uu_science_gmt
 		void createColorModel();
 
 	public:
-		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int);
+		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int = 4);
 
 		void update();
 

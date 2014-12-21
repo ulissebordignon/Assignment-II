@@ -20,13 +20,20 @@ namespace nl_uu_science_gmt
 	/**
 	* Voxel reconstruction class
 	*/
-	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn = 4) :
+	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn) :
 		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
 		// if file exists load color model
 	}
 
 	void Tracker::update() {
+		if (_scene3d.getReconstructor().getVisibleVoxels().size() > _scene3d.getReconstructor().getVoxels().size() / 4) {
+			if (!General::popup("Warning", "HSV unbalanced, Proceed?")) {
+				_active = false;
+				return;
+			}
+		}
+
 		if (_color_model.empty())
 			createColorModel();
 
@@ -35,6 +42,7 @@ namespace nl_uu_science_gmt
 	}
 
 	void Tracker::createColorModel() {
+
 		string winName = "Frame selection";
 		namedWindow(winName);
 
@@ -50,9 +58,9 @@ namespace nl_uu_science_gmt
 			vconcat(image, tmpImage, image);
 
 			resize(image, image, Size(), 0.5, 0.5);
-
+			putText(image, "Select a frame where all people are visible, then press 'c'", Point(10, 20), 1, 1, Scalar(0, 0, 255));
 			imshow(winName, image);
-			createTrackbar("Frame", winName, &selectedFrame, _cameras.front()->getFramesAmount());
+			createTrackbar("Frame", winName, &selectedFrame, _cameras.front()->getFramesAmount()-1);
 
 			k = waitKey(15);
 		}
