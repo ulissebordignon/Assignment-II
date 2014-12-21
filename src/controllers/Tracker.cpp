@@ -76,9 +76,7 @@ namespace nl_uu_science_gmt
 
 		vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
 
-		Mat labels;
-
-		Mat coordinates;
+		Mat labels, coordinates;
 
 		for (int i = 0; i < voxels.size(); i++)
 			coordinates.push_back(Point2f(voxels[i]->x, voxels[i]->y));
@@ -150,18 +148,18 @@ namespace nl_uu_science_gmt
 
 		// create color model for each label, using all views
 
-		Mat colorModel;
+		vector<Mat> colorModel(_clusters_number);
 
 		for (int i = 0; i < _cameras.size(); i++){
 
 			vector<VoxelAttributes> currentVoxels = visibleVoxelsMat[i];
 
 			// vector that stores the color bins 
-			vector<int> colorBins;
+			Mat colorBins;
 			for (int j = 0; j < currentVoxels.size(); j++){
 				
-				Reconstructor::Voxel* v = currentVoxels[j].voxel;
-				
+
+
 			}
 		}
 
