@@ -88,12 +88,12 @@ namespace nl_uu_science_gmt
 		
 		// create color model from selected frame
 
-		vector<vector<VoxelAttributes>> visibleVoxelsMat;
+		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
 
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<VoxelAttributes> visibleVoxels;
+			vector<VoxelAttributes*> visibleVoxels;
 
 			Point3f camLocation = _cameras[i]->getCameraLocation();
 
@@ -106,14 +106,16 @@ namespace nl_uu_science_gmt
 				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z));
 				
 				// determine if the projection has already been used
-				for (int k = 0; k < visibleVoxels.size(); k++){
-					if (projection == visibleVoxels[k].projection){
+				bool found = false;
+				int k = 0;
+				while (!found){
+					if (k < visibleVoxels.size() && projection == visibleVoxels[k]->projection){
 
 						float distOld, distNew;
 						// distance from old voxel to camera
-						distOld = sqrt(pow(visibleVoxels[k].voxel->x - camLocation.x, 2) +
-							pow(visibleVoxels[k].voxel->y - camLocation.y, 2) +
-							pow(visibleVoxels[k].voxel->z - camLocation.z, 2));
+						distOld = sqrt(pow(visibleVoxels[k]->voxel->x - camLocation.x, 2) +
+							pow(visibleVoxels[k]->voxel->y - camLocation.y, 2) +
+							pow(visibleVoxels[k]->voxel->z - camLocation.z, 2));
 						// distance from new voxel to camera
 						distNew =
 							sqrt(pow(voxels[j]->x - camLocation.x, 2) +
@@ -121,23 +123,22 @@ namespace nl_uu_science_gmt
 							pow(voxels[j]->z - camLocation.z, 2));
 						// if it has, and the new voxel is closer to the camera than the old one, substitute
 						if (distOld > distNew) {
-							visibleVoxels[k].voxel = voxels[j];
-							visibleVoxels[k].label = labels.at<int>(j);
+							visibleVoxels[k]->voxel = voxels[j];
+							visibleVoxels[k]->label = labels.at<int>(j);
 						}
 
-						break;
+						found = true;
 					}
-
-					if (k == visibleVoxels.size()) {
-						VoxelAttributes va;
-						va.voxel = voxels[j];
-						va.projection = projection;
-						va.label = labels.at<int>(j);
+					else if (k == visibleVoxels.size()) {
+						VoxelAttributes* va = new VoxelAttributes();
+						va->voxel = voxels[j];
+						va->projection = projection;
+						va->label = labels.at<int>(j);
 						// if it hasn't, add projection and projected voxel to the respective vectors
 						visibleVoxels.push_back(va);
-						break;
+						found = true;
 					}
-
+					k++;
 				} // end visible voxels loop
 
 			} // end voxel loop
@@ -152,14 +153,19 @@ namespace nl_uu_science_gmt
 
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<VoxelAttributes> currentVoxels = visibleVoxelsMat[i];
+			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
+			Mat frame = _cameras[i]->getVideoFrame(selectedFrame);
 
 			// vector that stores the color bins 
 			Mat colorBins;
+
 			for (int j = 0; j < currentVoxels.size(); j++){
 				
-
-
+				Vec3f intensity = frame.at<Vec3f>(currentVoxels[j]->projection);
+				float blue = intensity.val[0];
+				float green = intensity.val[1];
+				float red = intensity.val[2];
+				cout << red << " " << blue <<  " " << green << currentVoxels[j]->projection << endl;
 			}
 		}
 
