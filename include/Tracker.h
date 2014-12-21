@@ -33,10 +33,17 @@ namespace nl_uu_science_gmt
 			int label;
 		};
 
+		struct ColorModel 
+		{
+			std::vector<int> bHistogram;
+			std::vector<int> gHistogram;
+			std::vector<int> rHistogram;
+		};
+
 		const std::vector<Camera*> &_cameras;
 		const std::string _data_path;
 		Scene3DRenderer &_scene3d;
-		cv::Mat _color_model;
+		std::vector<ColorModel*> _color_models;
 		bool _active;
 		int _clusters_number;
 

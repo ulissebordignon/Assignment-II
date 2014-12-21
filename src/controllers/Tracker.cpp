@@ -34,7 +34,7 @@ namespace nl_uu_science_gmt
 			}
 		}
 
-		if (_color_model.empty())
+		if (true)
 			createColorModel();
 
 		// update voxels' colors based on colr model
@@ -149,25 +149,50 @@ namespace nl_uu_science_gmt
 
 		// create color model for each label, using all views
 
-		vector<Mat> colorModel(_clusters_number);
+		for (int i = 0; i < _clusters_number; i++) {
+			ColorModel* cm = new ColorModel();
+			cm->bHistogram.resize(25);
+			cm->gHistogram.resize(25);
+			cm->rHistogram.resize(25);
+			_color_models.push_back(cm);
+		}
+
 
 		for (int i = 0; i < _cameras.size(); i++){
 
 			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
 			Mat frame = _cameras[i]->getVideoFrame(selectedFrame);
 
-			// vector that stores the color bins 
-			Mat colorBins;
-
 			for (int j = 0; j < currentVoxels.size(); j++){
 				
-				Vec3f intensity = frame.at<Vec3f>(currentVoxels[j]->projection);
-				float blue = intensity.val[0];
-				float green = intensity.val[1];
-				float red = intensity.val[2];
-				cout << red << " " << blue <<  " " << green << currentVoxels[j]->projection << endl;
+				VoxelAttributes* va = currentVoxels[j];
+				ColorModel* cm = _color_models[va->label];
+
+				Vec3b intensity = frame.at<Vec3b>(va->projection);
+				int blue = intensity.val[0]/10;
+				int green = intensity.val[1]/10;
+				int red = intensity.val[2]/10;
+
+				cm->bHistogram[blue]++;
+				cm->gHistogram[green]++;
+				cm->rHistogram[red]++;
 			}
 		}
+
+		cout << "Blue histogram:" << endl;
+		for (int i = 0; i < _color_models[0]->bHistogram.size(); i++)
+			cout << _color_models[0]->bHistogram[i] << " ";
+		cout << endl;
+
+		cout << "Green histogram:" << endl;
+		for (int i = 0; i < _color_models[0]->gHistogram.size(); i++)
+			cout << _color_models[0]->gHistogram[i] << " ";
+		cout << endl;
+
+		cout << "Red histogram:" << endl;
+		for (int i = 0; i < _color_models[0]->rHistogram.size(); i++)
+			cout << _color_models[0]->rHistogram[i] << " ";
+		cout << endl;
 
 	}
 
