@@ -20,7 +20,7 @@ namespace nl_uu_science_gmt
 	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn) :
 		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
-		if (General::fexists(_data_path + "color_model.xml"))
+		if (General::fexists(_data_path + CM_FILENAME))
 			loadColorModel();
 	}
 
@@ -210,7 +210,7 @@ namespace nl_uu_science_gmt
 			ColorModel* cm = _color_models[i];
 
 			stringstream ss;
-			ss << "colorModel" << i;
+			ss << "Cluster" << i;
 			
 			fs << ss.str() << "{";
 			fs << "bHistogram" << cm->bHistogram;
@@ -234,7 +234,7 @@ namespace nl_uu_science_gmt
 			ColorModel* cm = new ColorModel();
 
 			stringstream ss;
-			ss << "colorModel" << i;
+			ss << "Cluster" << i;
 
 			FileNode fn = fs[ss.str()];
 
