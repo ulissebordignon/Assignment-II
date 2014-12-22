@@ -17,9 +17,6 @@ using namespace cv;
 namespace nl_uu_science_gmt
 {
 
-	/**
-	* Voxel reconstruction class
-	*/
 	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn) :
 		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
@@ -202,9 +199,12 @@ namespace nl_uu_science_gmt
 
 	}
 
+	/**
+	* Save the color model to the file system as an xml file
+	*/
 	void Tracker::saveColorModel() {
-		cout << "Saving color model to: " << _data_path << "color_model.xml...";
-		FileStorage fs(_data_path + "color_model.xml", FileStorage::WRITE);
+		cout << "Saving color model to " << _data_path << CM_FILENAME << "...";
+		FileStorage fs(_data_path + CM_FILENAME, FileStorage::WRITE);
 
 		for (int i = 0; i < _color_models.size(); i++) {
 			ColorModel* cm = _color_models[i];
@@ -223,9 +223,12 @@ namespace nl_uu_science_gmt
 		cout << " done!" << endl;
 	}
 
+	/**
+	* Load the color model from an xml file
+	*/
 	void Tracker::loadColorModel() {
 		cout << "Loading color model...";
-		FileStorage fs(_data_path + "color_model.xml", FileStorage::READ);
+		FileStorage fs(_data_path + CM_FILENAME, FileStorage::READ);
 
 		for (int i = 0; i < _clusters_number; i++) {
 			ColorModel* cm = new ColorModel();
@@ -234,8 +237,6 @@ namespace nl_uu_science_gmt
 			ss << "colorModel" << i;
 
 			FileNode fn = fs[ss.str()];
-			int idx = 0;
-			std::vector<uchar> lbpval;
 
 			fn["bHistogram"] >> cm->bHistogram;
 			fn["gHistogram"] >> cm->gHistogram;

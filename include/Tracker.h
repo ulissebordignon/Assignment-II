@@ -23,6 +23,8 @@
 namespace nl_uu_science_gmt
 {
 
+#define CM_FILENAME "color_model.xml"
+
 	class Tracker
 	{
 	public:
