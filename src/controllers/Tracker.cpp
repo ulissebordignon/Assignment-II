@@ -23,7 +23,8 @@ namespace nl_uu_science_gmt
 	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn) :
 		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
-		// if file exists load color model
+		if (General::fexists(_data_path + "color_model.xml"))
+			loadColorModel();
 	}
 
 	void Tracker::update() {
@@ -179,26 +180,12 @@ namespace nl_uu_science_gmt
 			}
 		}
 
-		cout << "Blue histogram:" << endl;
-		for (int i = 0; i < _color_models[0]->bHistogram.size(); i++)
-			cout << _color_models[0]->bHistogram[i] << " ";
-		cout << endl;
-
-		cout << "Green histogram:" << endl;
-		for (int i = 0; i < _color_models[0]->gHistogram.size(); i++)
-			cout << _color_models[0]->gHistogram[i] << " ";
-		cout << endl;
-
-		cout << "Red histogram:" << endl;
-		for (int i = 0; i < _color_models[0]->rHistogram.size(); i++)
-			cout << _color_models[0]->rHistogram[i] << " ";
-		cout << endl;
-
 		saveColorModel();
 
 	}
 
 	void Tracker::saveColorModel() {
+		cout << "Saving color model to: " << _data_path << "color_model.xml...";
 		FileStorage fs(_data_path + "color_model.xml", FileStorage::WRITE);
 
 		for (int i = 0; i < _color_models.size(); i++) {
@@ -215,6 +202,32 @@ namespace nl_uu_science_gmt
 		}
 
 		fs.release();
+		cout << " done!" << endl;
+	}
+
+	void Tracker::loadColorModel() {
+		cout << "Loading color model...";
+		FileStorage fs(_data_path + "color_model.xml", FileStorage::READ);
+
+		for (int i = 0; i < _clusters_number; i++) {
+			ColorModel* cm = new ColorModel();
+
+			stringstream ss;
+			ss << "colorModel" << i;
+
+			FileNode fn = fs[ss.str()];
+			int idx = 0;
+			std::vector<uchar> lbpval;
+
+			fn["bHistogram"] >> cm->bHistogram;
+			fn["gHistogram"] >> cm->gHistogram;
+			fn["rHistogram"] >> cm->rHistogram;
+			
+			_color_models.push_back(cm);
+		}
+
+		fs.release();
+		cout << " done!" << endl;
 	}
 
 } /* namespace nl_uu_science_gmt */
