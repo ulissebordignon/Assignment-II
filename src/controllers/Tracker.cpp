@@ -34,7 +34,7 @@ namespace nl_uu_science_gmt
 			}
 		}
 
-		if (true)
+		if (_color_models.size() == 0)
 			createColorModel();
 
 		// update voxels' colors based on colr model
@@ -194,7 +194,27 @@ namespace nl_uu_science_gmt
 			cout << _color_models[0]->rHistogram[i] << " ";
 		cout << endl;
 
+		saveColorModel();
+
 	}
 
+	void Tracker::saveColorModel() {
+		FileStorage fs(_data_path + "color_model.xml", FileStorage::WRITE);
+
+		for (int i = 0; i < _color_models.size(); i++) {
+			ColorModel* cm = _color_models[i];
+
+			stringstream ss;
+			ss << "colorModel" << i;
+			
+			fs << ss.str() << "{";
+			fs << "bHistogram" << cm->bHistogram;
+			fs << "gHistogram" << cm->gHistogram;
+			fs << "rHistogram" << cm->rHistogram;
+			fs << "}";
+		}
+
+		fs.release();
+	}
 
 } /* namespace nl_uu_science_gmt */

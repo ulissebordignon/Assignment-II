@@ -40,6 +40,8 @@ namespace nl_uu_science_gmt
 			std::vector<int> rHistogram;
 		};
 
+	private:
+
 		const std::vector<Camera*> &_cameras;
 		const std::string _data_path;
 		Scene3DRenderer &_scene3d;
@@ -48,6 +50,8 @@ namespace nl_uu_science_gmt
 		int _clusters_number;
 
 		void createColorModel();
+		void saveColorModel();
+		void loadColorModel();
 
 	public:
 		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int = 4);
