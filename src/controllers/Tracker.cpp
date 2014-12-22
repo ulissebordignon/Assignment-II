@@ -43,7 +43,6 @@ namespace nl_uu_science_gmt
 	}
 
 	void Tracker::createColorModel() {
-
 		string winName = "Frame selection";
 		namedWindow(winName);
 
@@ -65,8 +64,9 @@ namespace nl_uu_science_gmt
 
 			k = waitKey(15);
 		}
-
 		destroyWindow(winName);
+
+		cout << "Creating color model...";
 
 		for (int i = 0; i < _cameras.size(); i++)
 			_scene3d.processForeground(_cameras[i]);
@@ -179,6 +179,24 @@ namespace nl_uu_science_gmt
 				cm->rHistogram[red]++;
 			}
 		}
+
+		// Normalization
+		for (int i = 0; i < _color_models.size(); i++) {
+			ColorModel* cm = _color_models[i];
+
+			int tot = 0;
+			for (int j = 0; j < cm->bHistogram.size(); j++)
+				tot += cm->bHistogram[j];
+
+			for (int j = 0; j < cm->bHistogram.size(); j++)
+				cm->bHistogram[j] = cm->bHistogram[j] * 100 / tot;
+			for (int j = 0; j < cm->gHistogram.size(); j++)
+				cm->gHistogram[j] = cm->gHistogram[j] * 100 / tot;
+			for (int j = 0; j < cm->rHistogram.size(); j++)
+				cm->rHistogram[j] = cm->rHistogram[j] * 100 / tot;
+		}
+
+		cout << " done!" << endl;
 
 		saveColorModel();
 

@@ -35,9 +35,9 @@ namespace nl_uu_science_gmt
 
 		struct ColorModel 
 		{
-			std::vector<int> bHistogram;
-			std::vector<int> gHistogram;
-			std::vector<int> rHistogram;
+			std::vector<float> bHistogram;
+			std::vector<float> gHistogram;
+			std::vector<float> rHistogram;
 		};
 
 	private:
