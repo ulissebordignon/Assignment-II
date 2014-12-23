@@ -22,7 +22,7 @@ namespace nl_uu_science_gmt
 	const string General::CheckerboadVideo = "checkerboard.avi";
 	const string General::BackgroundVideoFile = "background.avi";
 	const string General::BackgroundImageFile = "background.png";
-	const string General::VideoFile = "video.avi";
+	const string General::VideoFile = "3persons.avi";
 	const string General::IntrinsicsFile = "intrinsics.xml";
 	const string General::CheckerboadCorners = "boardcorners.xml";
 	const string General::ConfigFile = "config.xml";

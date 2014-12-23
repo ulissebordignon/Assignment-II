@@ -111,8 +111,14 @@ namespace nl_uu_science_gmt
 					closestCenterDst = currentCenterDst;
 				}
 			}
-			voxels[i]->color = _color_models[c]->color;
-			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+			if (closestCenterDst < 1000) {
+				voxels[i]->color = _color_models[c]->color;
+				relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+			}
+			else {
+				voxels[i]->color = _color_models[c]->color;
+				voxels[i]->color[3] = 0.f;
+			}
 		}
 
 		for (int i = 0; i < _clusters_number; i++) {
