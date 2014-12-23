@@ -81,6 +81,7 @@ namespace nl_uu_science_gmt
 				}
 
 				va->label = m;
+				points4Relabelling[va->label].push_back(Point2i(va->voxel->x, va->voxel->y));
 				va->voxel->color = _color_models[m]->color;
 			}
 		}
