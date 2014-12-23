@@ -32,8 +32,10 @@ namespace nl_uu_science_gmt
 			}
 		}
 
-		if (_color_models.size() == 0)
+		if (_color_models.size() == 0) {
 			createColorModel();
+			return;
+		}
 
 		// update voxels' colors based on color model
 		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
@@ -63,35 +65,22 @@ namespace nl_uu_science_gmt
 				cm->rHistogram[red]++;
 
 				// current label
-				int m;
+				int m = 0;
 
-				float lastResult = FLT_MAX;
+				float bestResult = FLT_MAX;
 				
 				for (int k = 0; k < _clusters_number; k++) {
-					
-					float currentResult = chiSquared(_color_models[k], cm);
-					if (currentResult < lastResult)
-						m = k;
 
-					lastResult = currentResult;
+					float currentResult = chiSquared(_color_models[k], cm);
+					cout << currentResult << endl;
+					if (currentResult < bestResult) {
+						m = k;
+						bestResult = currentResult;
+					}
 				}
 
 				va->label = m;
-				switch (va->label)
-				{
-				case 0:
-					va->voxel->color = Scalar(1.f, 1.f, 0.f, 1.f);
-					break;
-				case 1:
-					va->voxel->color = Scalar(1.f, 0.f, 0.f, 1.f);
-					break;
-				case 2:
-					va->voxel->color = Scalar(0.f, 1.f, 0.f, 1.f);
-					break;
-				case 3:
-					va->voxel->color = Scalar(0.f, 0.f, 1.f, 1.f);
-					break;
-				}
+				va->voxel->color = _color_models[m]->color;
 				
 			}
 		}
@@ -232,6 +221,7 @@ namespace nl_uu_science_gmt
 			ss << "Cluster" << i;
 			
 			fs << ss.str() << "{";
+			fs << "color" << cm->color;
 			fs << "bHistogram" << cm->bHistogram;
 			fs << "gHistogram" << cm->gHistogram;
 			fs << "rHistogram" << cm->rHistogram;
@@ -257,6 +247,7 @@ namespace nl_uu_science_gmt
 
 			FileNode fn = fs[ss.str()];
 
+			fn["color"] >> cm->color;
 			fn["bHistogram"] >> cm->bHistogram;
 			fn["gHistogram"] >> cm->gHistogram;
 			fn["rHistogram"] >> cm->rHistogram;
@@ -340,19 +331,22 @@ namespace nl_uu_science_gmt
 
 		float bDist = 0;
 		for (int i = 0; i < reference->bHistogram.size(); i++) {
-			bDist += pow(reference->bHistogram[i] - data->bHistogram[i], 2) / (reference->bHistogram[i] + data->bHistogram[i]);
+			if (reference->bHistogram[i] + data->bHistogram[i] != 0)
+				bDist += pow(reference->bHistogram[i] - data->bHistogram[i], 2) / (reference->bHistogram[i] + data->bHistogram[i]);
 		}
 		bDist = bDist / 2.0f;
 
 		float gDist = 0;
 		for (int i = 0; i < reference->gHistogram.size(); i++) {
-			bDist += pow(reference->gHistogram[i] - data->gHistogram[i], 2) / (reference->gHistogram[i] + data->gHistogram[i]);
+			if (reference->gHistogram[i] + data->gHistogram[i] != 0)
+				bDist += pow(reference->gHistogram[i] - data->gHistogram[i], 2) / (reference->gHistogram[i] + data->gHistogram[i]);
 		}
 		gDist = gDist / 2.0f;
 
 		float rDist = 0;
 		for (int i = 0; i < reference->rHistogram.size(); i++) {
-			bDist += pow(reference->rHistogram[i] - data->rHistogram[i], 2) / (reference->rHistogram[i] + data->rHistogram[i]);
+			if (reference->rHistogram[i] + data->rHistogram[i] != 0)
+				bDist += pow(reference->rHistogram[i] - data->rHistogram[i], 2) / (reference->rHistogram[i] + data->rHistogram[i]);
 		}
 		rDist = rDist / 2.0f;
 
