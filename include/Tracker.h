@@ -90,7 +90,7 @@ namespace nl_uu_science_gmt
 			return _color_models;
 		}
 
-		void projectVoxels(std::vector<std::vector<VoxelAttributes*>>&, const cv::Mat = cv::Mat());
+		void projectVoxels(std::vector<std::map<float,VoxelAttributes*>>&, const cv::Mat = cv::Mat());
 	};
 
 } /* namespace nl_uu_science_gmt */

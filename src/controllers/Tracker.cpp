@@ -25,6 +25,7 @@ namespace nl_uu_science_gmt
 
 		if (General::fexists(_data_path + CM_FILENAME))
 			loadColorModel();
+		_refined_centers.resize(cn);
 	}
 
 	void Tracker::update() {
@@ -42,17 +43,17 @@ namespace nl_uu_science_gmt
 		}
 
 		// update voxels' colors based on color model
-		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
+		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 		
 		projectVoxels(visibleVoxelsMat);
 		vector < vector<Point2i> > points4Relabelling(_clusters_number);
 		
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
-			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
+			map<float,VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
 			
-			for (int j = 0; j < currentVoxels.size(); j++) {
+			for (map<float, VoxelAttributes*>::iterator it = currentVoxels.begin(); it != currentVoxels.end(); it++) {
 
-				VoxelAttributes* va = currentVoxels[j];
+				VoxelAttributes* va = it->second;
 				ColorModel* cm = new ColorModel();
 				cm->bHistogram.resize(25);
 				cm->gHistogram.resize(25);
@@ -171,7 +172,7 @@ namespace nl_uu_science_gmt
 		
 		// create color model from selected frame
 
-		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
+		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 
 		projectVoxels(visibleVoxelsMat, labels);
 
@@ -205,12 +206,12 @@ namespace nl_uu_science_gmt
 
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
+			map<float,VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
 			Mat frame = _cameras[i]->getVideoFrame(selectedFrame);
 
-			for (int j = 0; j < currentVoxels.size(); j++){
+			for (map<float,VoxelAttributes*>::iterator it = currentVoxels.begin(); it != currentVoxels.end(); it++){
 				
-				VoxelAttributes* va = currentVoxels[j];
+				VoxelAttributes* va = it->second;
 				ColorModel* cm = _color_models[va->label];
 
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
@@ -297,7 +298,7 @@ namespace nl_uu_science_gmt
 		cout << " done!" << endl;
 	}
 
-	void Tracker::projectVoxels(vector<vector<VoxelAttributes*>>& outputVector, const Mat labels) {
+	void Tracker::projectVoxels(vector<map<float,VoxelAttributes*>>& outputVector, const Mat labels) {
 		
 		Reconstructor &rec = _scene3d.getReconstructor();
 		vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
@@ -305,7 +306,7 @@ namespace nl_uu_science_gmt
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
 
-			vector<VoxelAttributes*> visibleVoxels;
+			map<float,VoxelAttributes*> visibleVoxels;
 
 			Point3f camLocation = _cameras[i]->getCameraLocation();
 
@@ -316,44 +317,39 @@ namespace nl_uu_science_gmt
 				Point2i projection;
 
 				projection = _cameras[i]->projectOnView(Point3f(voxels[j]->x, voxels[j]->y, voxels[j]->z));
+				int x = projection.x;
+				int y = projection.y;
+				float key = (x + y)*(x + y + 1) / 2 + y;
 
 				// determine if the projection has already been used
-				bool found = false;
-				int k = 0;
-				while (!found){
-					if (k < visibleVoxels.size() && projection == visibleVoxels[k]->projection){
-
-						float distOld, distNew;
-						// distance from old voxel to camera
-						distOld = sqrt(pow(visibleVoxels[k]->voxel->x - camLocation.x, 2) +
-							pow(visibleVoxels[k]->voxel->y - camLocation.y, 2) +
-							pow(visibleVoxels[k]->voxel->z - camLocation.z, 2));
-						// distance from new voxel to camera
-						distNew =
-							sqrt(pow(voxels[j]->x - camLocation.x, 2) +
-							pow(voxels[j]->y - camLocation.y, 2) +
-							pow(voxels[j]->z - camLocation.z, 2));
-						// if it has, and the new voxel is closer to the camera than the old one, substitute
-						if (distOld > distNew) {
-							visibleVoxels[k]->voxel = voxels[j];
-							if (!labels.empty())
-								visibleVoxels[k]->label = labels.at<int>(j);
-						}
-
-						found = true;
-					}
-					else if (k == visibleVoxels.size()) {
-						VoxelAttributes* va = new VoxelAttributes();
+				if (visibleVoxels.find(key) == visibleVoxels.end()) {
+					VoxelAttributes* va = new VoxelAttributes();
+					va->voxel = voxels[j];
+					va->projection = projection;
+					if (!labels.empty())
+						va->label = labels.at<int>(j);
+					// if it hasn't, add projection and projected voxel to the respective vectors
+					visibleVoxels[key] = va;
+				}
+				else {
+					float distOld, distNew;
+					VoxelAttributes* va = visibleVoxels[key];
+					// distance from old voxel to camera
+					distOld = sqrt(pow(va->voxel->x - camLocation.x, 2) +
+						pow(va->voxel->y - camLocation.y, 2) +
+						pow(va->voxel->z - camLocation.z, 2));
+					// distance from new voxel to camera
+					distNew =
+						sqrt(pow(voxels[j]->x - camLocation.x, 2) +
+						pow(voxels[j]->y - camLocation.y, 2) +
+						pow(voxels[j]->z - camLocation.z, 2));
+					// if it has, and the new voxel is closer to the camera than the old one, substitute
+					if (distOld > distNew) {
 						va->voxel = voxels[j];
-						va->projection = projection;
 						if (!labels.empty())
 							va->label = labels.at<int>(j);
-						// if it hasn't, add projection and projected voxel to the respective vectors
-						visibleVoxels.push_back(va);
-						found = true;
 					}
-					k++;
-				} // end visible voxels loop
+				}
 
 			} // end voxel loop
 
