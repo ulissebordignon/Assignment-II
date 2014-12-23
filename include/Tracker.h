@@ -80,7 +80,7 @@ namespace nl_uu_science_gmt
 			_active = !_active;
 		}
 
-		float chiSquared(const ColorModel*, const ColorModel&);
+		float chiSquared(const ColorModel*, const ColorModel*);
 
 		std::vector<std::vector<cv::Point2f>> getRefinedCenters() {
 			return _refined_centers;

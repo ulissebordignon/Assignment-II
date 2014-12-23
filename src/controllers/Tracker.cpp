@@ -42,14 +42,14 @@ namespace nl_uu_science_gmt
 		
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
-
+			
 			for (int j = 0; j < currentVoxels.size(); j++) {
 
 				VoxelAttributes* va = currentVoxels[j];
-				ColorModel cm;
-				cm.bHistogram.resize(25);
-				cm.gHistogram.resize(25);
-				cm.rHistogram.resize(25);
+				ColorModel* cm = new ColorModel();
+				cm->bHistogram.resize(25);
+				cm->gHistogram.resize(25);
+				cm->rHistogram.resize(25);
 				Mat frame = _cameras[i]->getFrame();
 				
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
@@ -58,15 +58,15 @@ namespace nl_uu_science_gmt
 				int green = intensity.val[1] / 10;
 				int red = intensity.val[2] / 10;
 
-				cm.bHistogram[blue]++;
-				cm.gHistogram[green]++;
-				cm.rHistogram[red]++;
+				cm->bHistogram[blue]++;
+				cm->gHistogram[green]++;
+				cm->rHistogram[red]++;
 
 				// current label
 				int m;
 
 				float lastResult = FLT_MAX;
-					
+				
 				for (int k = 0; k < _clusters_number; k++) {
 					
 					float currentResult = chiSquared(_color_models[k], cm);
@@ -92,7 +92,7 @@ namespace nl_uu_science_gmt
 					va->voxel->color = Scalar(0.f, 0.f, 1.f, 1.f);
 					break;
 				}
-
+				
 			}
 		}
 	}
@@ -334,25 +334,25 @@ namespace nl_uu_science_gmt
 
 	}
 
-	float Tracker::chiSquared(const ColorModel* reference, const ColorModel& data) {
+	float Tracker::chiSquared(const ColorModel* reference, const ColorModel* data) {
 
 		assert(colorModel.size() == colorHistogram.size());
 
 		float bDist = 0;
 		for (int i = 0; i < reference->bHistogram.size(); i++) {
-			bDist += pow(reference->bHistogram[i] - data.bHistogram[i], 2) / (reference->bHistogram[i] + data.bHistogram[i]);
+			bDist += pow(reference->bHistogram[i] - data->bHistogram[i], 2) / (reference->bHistogram[i] + data->bHistogram[i]);
 		}
 		bDist = bDist / 2.0f;
 
 		float gDist = 0;
 		for (int i = 0; i < reference->gHistogram.size(); i++) {
-			bDist += pow(reference->gHistogram[i] - data.gHistogram[i], 2) / (reference->gHistogram[i] + data.gHistogram[i]);
+			bDist += pow(reference->gHistogram[i] - data->gHistogram[i], 2) / (reference->gHistogram[i] + data->gHistogram[i]);
 		}
 		gDist = gDist / 2.0f;
 
 		float rDist = 0;
 		for (int i = 0; i < reference->rHistogram.size(); i++) {
-			bDist += pow(reference->rHistogram[i] - data.rHistogram[i], 2) / (reference->rHistogram[i] + data.rHistogram[i]);
+			bDist += pow(reference->rHistogram[i] - data->rHistogram[i], 2) / (reference->rHistogram[i] + data->rHistogram[i]);
 		}
 		rDist = rDist / 2.0f;
 

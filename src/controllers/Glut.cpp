@@ -926,7 +926,7 @@ namespace nl_uu_science_gmt
 		
 		for (int i = 0; i < tracker.getRefinedCenters().size(); i++) {
 			vector<Point2f> centers = tracker.getRefinedCenters()[i];
-			Scalar color = tracker.getColorModels[i]->color;
+			Scalar color = tracker.getColorModels()[i]->color;
 
 			glLineWidth(1.5f);
 			glPushMatrix();
