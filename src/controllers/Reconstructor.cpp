@@ -140,10 +140,6 @@ namespace nl_uu_science_gmt
 			ofstream outputFile;
 			outputFile.open(_data_path + "voxels.csv");
 
-#ifdef _OPENMP
-			omp_set_num_threads(NUM_THREADS);
-#pragma omp parallel
-#endif
 			for (int z = zL; z < zR; z += _step)
 			{
 				cout << "." << flush;
