@@ -25,7 +25,8 @@ namespace nl_uu_science_gmt
 	}
 
 	void Tracker::update() {
-		if (_scene3d.getReconstructor().getVisibleVoxels().size() > _scene3d.getReconstructor().getVoxels().size() / 4) {
+		vector<Reconstructor::Voxel*> voxels = _scene3d.getReconstructor().getVisibleVoxels();
+		if (voxels.size() > _scene3d.getReconstructor().getVoxels().size() / 4) {
 			if (!General::popup("Warning", "HSV unbalanced, Proceed?")) {
 				_active = false;
 				return;
@@ -86,15 +87,28 @@ namespace nl_uu_science_gmt
 			}
 		}
 
-		vector<Point2i> centersVector;
 		for (int i = 0; i < _clusters_number; i++) {
 			int sumx = 0, sumy = 0;
 			for (int j = 0; j < points4Relabelling[i].size(); j++) {
 				sumx += points4Relabelling[i][j].x;
 				sumy += points4Relabelling[i][j].y;
 			}
-			centersVector.push_back(Point2i(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
+			_refined_centers[i].push_back(Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
 		}
+
+		for (int i = 0; i < voxels.size(); i++) {
+
+			float closestCenterDst = FLT_MAX;
+			int c;
+			for (int j = 0; j < _clusters_number; j++) {
+				float currentCenterDst = sqrt(pow(voxels[i]->x - _refined_centers[j].back().x, 2) + pow(voxels[i]->y - _refined_centers[j].back().y, 2));
+				if (currentCenterDst < closestCenterDst)
+					c = j;
+				closestCenterDst = currentCenterDst;
+			}
+			voxels[i]->color = _color_models[c]->color;
+		}
+
 	}
 
 	void Tracker::createColorModel() {
