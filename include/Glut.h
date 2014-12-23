@@ -46,6 +46,7 @@ namespace nl_uu_science_gmt
 		static void drawVoxels();
 		static void drawWCoord();
 		static void drawInfo();
+		static void drawClustersCenters();
 
 		static void optimizeHSV(bool);
 		static bool drawOptimization(cv::Mat, const cv::Scalar&, const cv::Scalar&);

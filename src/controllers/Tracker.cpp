@@ -103,6 +103,23 @@ namespace nl_uu_science_gmt
 			cm->bHistogram.resize(25);
 			cm->gHistogram.resize(25);
 			cm->rHistogram.resize(25);
+
+			switch (i) {
+			case 0:
+				cm->color = Scalar(1.f, 1.f, 0.f, 1.f);
+				break;
+			case 1:
+				cm->color = Scalar(1.f, 0.f, 0.f, 1.f);
+				break;
+			case 2:
+				cm->color = Scalar(0.f, 1.f, 0.f, 1.f);
+				break;
+			case 3:
+				cm->color = Scalar(0.f, 0.f, 1.f, 1.f);
+				break;
+			default:
+				cm->color = Scalar(0.f, 0.f, 0.f, 1.f);
+			}
 			_color_models.push_back(cm);
 		}
 

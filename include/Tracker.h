@@ -37,6 +37,7 @@ namespace nl_uu_science_gmt
 
 		struct ColorModel 
 		{
+			cv::Scalar color;
 			std::vector<float> bHistogram;
 			std::vector<float> gHistogram;
 			std::vector<float> rHistogram;
@@ -50,6 +51,8 @@ namespace nl_uu_science_gmt
 		std::vector<ColorModel*> _color_models;
 		bool _active;
 		int _clusters_number;
+		std::vector<std::vector<cv::Point2f>> _unrefined_centers;
+		std::vector<std::vector<cv::Point2f>> _refined_centers;
 
 		void createColorModel();
 		void saveColorModel();
@@ -75,6 +78,14 @@ namespace nl_uu_science_gmt
 
 		void toggleActive() {
 			_active = !_active;
+		}
+
+		std::vector<std::vector<cv::Point2f>> getRefinedCenters() {
+			return _refined_centers;
+		}
+
+		std::vector<ColorModel*> getColorModels() {
+			return _color_models;
 		}
 
 		float chiSquared(const ColorModel&, const ColorModel&);

@@ -535,10 +535,12 @@ namespace nl_uu_science_gmt
 		arcball_rotate();
 
 		Scene3DRenderer& scene3d = _glut->getScene3d();
+		Tracker& tracker = _glut->getTracker();
 		if (scene3d.isShowGrdFlr()) drawGrdGrid();
 		if (scene3d.isShowCam()) drawCamCoord();
 		if (scene3d.isShowVolume()) drawVolume();
 		if (scene3d.isShowArcball()) drawArcball();
+		if (tracker.isActive()) drawClustersCenters();
 
 		drawVoxels();
 
@@ -916,6 +918,28 @@ namespace nl_uu_science_gmt
 		glEnd();
 		glPopMatrix();
 #endif
+	}
+
+	void Glut::drawClustersCenters() {
+		Scene3DRenderer& scene3d = _glut->getScene3d();
+		Tracker& tracker = _glut->getTracker();
+		
+		for (int i = 0; i < tracker.getRefinedCenters().size(); i++) {
+			vector<Point2f> centers = tracker.getRefinedCenters()[i];
+			Scalar color = tracker.getColorModels[i]->color;
+
+			glLineWidth(1.5f);
+			glPushMatrix();
+			glBegin(GL_LINE_STRIP);
+			glColor4f(color[0], color[1], color[2], color[3]);
+
+			for (int j = 0; j < centers.size() && j < scene3d.getCurrentFrame(); j++) {
+				glVertex3f(centers[j].x, centers[j].y, 0);
+			}
+
+			glEnd();
+			glPopMatrix();
+		}
 	}
 
 
