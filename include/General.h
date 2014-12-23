@@ -60,7 +60,6 @@ public:
 	static const std::string BackgroundImageFile;
 	static const std::string BackgroundVideoFile;
 	static const std::string ConfigFile;
-	static const std::string FourPersonsVideo;
 
 	static bool fexists(const std::string &);
 

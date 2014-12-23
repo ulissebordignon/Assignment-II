@@ -85,9 +85,9 @@ bool Camera::initialize()
 	split(bg_hsv_im, _bg_hsv_channels);
 
 	// Open the video for this camera
-	_video = VideoCapture(_data_path + General::FourPersonsVideo);
+	_video = VideoCapture(_data_path + General::VideoFile);
 	assert(_video.isOpened());
-
+	
 	// Assess the image size
 	_plane_size.width = (int) _video.get(CV_CAP_PROP_FRAME_WIDTH);
 	_plane_size.height = (int) _video.get(CV_CAP_PROP_FRAME_HEIGHT);
@@ -100,7 +100,7 @@ bool Camera::initialize()
 	_video.set(CV_CAP_PROP_POS_AVI_RATIO, 0);  // Go back to the start
 
 	_video.release(); //Re-open the file because _video.set(CV_CAP_PROP_POS_AVI_RATIO, 1) may screw it up
-	_video = cv::VideoCapture(_data_path + General::FourPersonsVideo);
+	_video = cv::VideoCapture(_data_path + General::VideoFile);
 
 	// Read the camera properties (XML)
 	FileStorage fs;
