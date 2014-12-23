@@ -20,6 +20,9 @@ namespace nl_uu_science_gmt
 	Tracker::Tracker(const vector<Camera*> &cs, const string& dp, Scene3DRenderer &s3d, int cn) :
 		_cameras(cs), _data_path(dp), _scene3d(s3d), _active(false), _clusters_number(cn)
 	{
+		_unrefined_centers.resize(_clusters_number);
+		_refined_centers.resize(_clusters_number);
+
 		if (General::fexists(_data_path + CM_FILENAME))
 			loadColorModel();
 	}
@@ -74,7 +77,6 @@ namespace nl_uu_science_gmt
 				for (int k = 0; k < _clusters_number; k++) {
 
 					float currentResult = chiSquared(_color_models[k], cm);
-					cout << currentResult << endl;
 					if (currentResult < bestResult) {
 						m = k;
 						bestResult = currentResult;
@@ -93,20 +95,31 @@ namespace nl_uu_science_gmt
 				sumx += points4Relabelling[i][j].x;
 				sumy += points4Relabelling[i][j].y;
 			}
-			_refined_centers[i].push_back(Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
+			_unrefined_centers[i].push_back(Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
 		}
 
+		vector < vector<Point2i> > relabelledPoints(_clusters_number);
 		for (int i = 0; i < voxels.size(); i++) {
 
 			float closestCenterDst = FLT_MAX;
 			int c;
 			for (int j = 0; j < _clusters_number; j++) {
-				float currentCenterDst = sqrt(pow(voxels[i]->x - _refined_centers[j].back().x, 2) + pow(voxels[i]->y - _refined_centers[j].back().y, 2));
+				float currentCenterDst = sqrt(pow(voxels[i]->x - _unrefined_centers[j].back().x, 2) + pow(voxels[i]->y - _unrefined_centers[j].back().y, 2));
 				if (currentCenterDst < closestCenterDst)
 					c = j;
 				closestCenterDst = currentCenterDst;
 			}
 			voxels[i]->color = _color_models[c]->color;
+			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+		}
+
+		for (int i = 0; i < _clusters_number; i++) {
+			int sumx = 0, sumy = 0;
+			for (int j = 0; j < relabelledPoints[i].size(); j++) {
+				sumx += relabelledPoints[i][j].x;
+				sumy += relabelledPoints[i][j].y;
+			}
+			_refined_centers[i].push_back(Point2f(sumx / relabelledPoints[i].size(), sumy / relabelledPoints[i].size()));
 		}
 
 	}
