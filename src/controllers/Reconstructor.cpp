@@ -33,7 +33,7 @@ namespace nl_uu_science_gmt
 		}
 
 		_step = 32;
-		_size = 512;
+		_size = 768;
 		const size_t h_edge = _size * 4;
 		const size_t edge = 2 * h_edge;
 		_voxels_amount = (edge / _step) * (edge / _step) * (h_edge / _step);

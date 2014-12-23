@@ -59,7 +59,7 @@ namespace nl_uu_science_gmt
 		void loadColorModel();
 
 	public:
-		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int = 4);
+		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int = 3);
 
 		void update();
 

@@ -55,20 +55,20 @@ namespace nl_uu_science_gmt
 
 				VoxelAttributes* va = it->second;
 				ColorModel* cm = new ColorModel();
-				cm->bHistogram.resize(25);
-				cm->gHistogram.resize(25);
-				cm->rHistogram.resize(25);
+				cm->bHistogram.resize(26);
+				cm->gHistogram.resize(26);
+				cm->rHistogram.resize(26);
 				Mat frame = _cameras[i]->getFrame();
 				
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
 
-				int blue = intensity.val[0] / 10;
-				int green = intensity.val[1] / 10;
-				int red = intensity.val[2] / 10;
+				int blue = floor(intensity.val[0] / 10);
+				int green = floor(intensity.val[1] / 10);
+				int red = floor(intensity.val[2] / 10);
 
-				cm->bHistogram[blue]++;
-				cm->gHistogram[green]++;
-				cm->rHistogram[red]++;
+				cm->bHistogram[blue] = 100;
+				cm->gHistogram[green] = 100;
+				cm->rHistogram[red] = 100;
 
 				// current label
 				int m = 0;
@@ -85,7 +85,7 @@ namespace nl_uu_science_gmt
 				}
 
 				va->label = m;
-				points4Relabelling[va->label].push_back(Point2i(va->voxel->x, va->voxel->y));
+				points4Relabelling[m].push_back(Point2f(va->voxel->x, va->voxel->y));
 				va->voxel->color = _color_models[m]->color;
 			}
 		}
@@ -106,9 +106,10 @@ namespace nl_uu_science_gmt
 			int c;
 			for (int j = 0; j < _clusters_number; j++) {
 				float currentCenterDst = sqrt(pow(voxels[i]->x - _unrefined_centers[j].back().x, 2) + pow(voxels[i]->y - _unrefined_centers[j].back().y, 2));
-				if (currentCenterDst < closestCenterDst)
+				if (currentCenterDst < closestCenterDst) {
 					c = j;
-				closestCenterDst = currentCenterDst;
+					closestCenterDst = currentCenterDst;
+				}
 			}
 			voxels[i]->color = _color_models[c]->color;
 			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
@@ -168,7 +169,7 @@ namespace nl_uu_science_gmt
 		TermCriteria criteria;
 		criteria.maxCount = 10;
 
-		kmeans(coordinates, 4, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
+		kmeans(coordinates, _clusters_number, labels, criteria, 2, KMEANS_RANDOM_CENTERS);
 		
 		// create color model from selected frame
 
@@ -180,22 +181,19 @@ namespace nl_uu_science_gmt
 
 		for (int i = 0; i < _clusters_number; i++) {
 			ColorModel* cm = new ColorModel();
-			cm->bHistogram.resize(25);
-			cm->gHistogram.resize(25);
-			cm->rHistogram.resize(25);
+			cm->bHistogram.resize(26);
+			cm->gHistogram.resize(26);
+			cm->rHistogram.resize(26);
 
 			switch (i) {
 			case 0:
-				cm->color = Scalar(1.f, 1.f, 0.f, 1.f);
+				cm->color = Scalar(0.f, 0.f, 1.f, 1.f);
 				break;
 			case 1:
 				cm->color = Scalar(1.f, 0.f, 0.f, 1.f);
 				break;
 			case 2:
 				cm->color = Scalar(0.f, 1.f, 0.f, 1.f);
-				break;
-			case 3:
-				cm->color = Scalar(0.f, 0.f, 1.f, 1.f);
 				break;
 			default:
 				cm->color = Scalar(0.f, 0.f, 0.f, 1.f);
@@ -215,9 +213,9 @@ namespace nl_uu_science_gmt
 				ColorModel* cm = _color_models[va->label];
 
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
-				int blue = intensity.val[0]/10;
-				int green = intensity.val[1]/10;
-				int red = intensity.val[2]/10;
+				int blue = floor(intensity.val[0]/10);
+				int green = floor(intensity.val[1]/10);
+				int red = floor(intensity.val[2]/10);
 
 				cm->bHistogram[blue]++;
 				cm->gHistogram[green]++;
@@ -349,6 +347,8 @@ namespace nl_uu_science_gmt
 						if (!labels.empty())
 							va->label = labels.at<int>(j);
 					}
+
+					cout << endl;
 				}
 
 			} // end voxel loop
