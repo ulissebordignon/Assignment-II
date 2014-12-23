@@ -76,6 +76,10 @@ namespace nl_uu_science_gmt
 		void toggleActive() {
 			_active = !_active;
 		}
+
+		float chiSquared(const std::vector<float>&, const std::vector<float>&);
+
+		void projectVoxels(std::vector<std::vector<VoxelAttributes*>>&, const cv::Mat = cv::Mat());
 	};
 
 } /* namespace nl_uu_science_gmt */
