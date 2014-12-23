@@ -35,10 +35,14 @@ namespace nl_uu_science_gmt
 		if (_color_models.size() == 0)
 			createColorModel();
 
+		// update voxels' colors based on color model
+		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
 
+		projectVoxels(visibleVoxelsMat);
 
-		// update voxels' colors based on colr model
+		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 
+		}
 	}
 
 	void Tracker::createColorModel() {
@@ -150,7 +154,6 @@ namespace nl_uu_science_gmt
 	* Save the color model to the file system as an xml file
 	*/
 	void Tracker::saveColorModel() {
-		cout << "Saving color model to " << _data_path << CM_FILENAME << "...";
 		FileStorage fs(_data_path + CM_FILENAME, FileStorage::WRITE);
 
 		for (int i = 0; i < _color_models.size(); i++) {
@@ -167,7 +170,7 @@ namespace nl_uu_science_gmt
 		}
 
 		fs.release();
-		cout << " done!" << endl;
+		cout << "Color model saved to " << _data_path << CM_FILENAME << endl;
 	}
 
 	/**
@@ -262,15 +265,29 @@ namespace nl_uu_science_gmt
 
 	}
 
-	float Tracker::chiSquared(const vector<float>& colorModel, const vector<float>& colorHistogram) {
+	float Tracker::chiSquared(const ColorModel& reference, const ColorModel& data) {
 
 		assert(colorModel.size() == colorHistogram.size());
 
-		float sum = 0;
-		for (int i = 0; i < colorModel.size(); i++) {
-			sum += pow(colorModel[i] - colorHistogram[i], 2) / (colorModel[i] + colorHistogram[i]);
+		float bDist = 0;
+		for (int i = 0; i < reference.bHistogram.size(); i++) {
+			bDist += pow(reference.bHistogram[i] - data.bHistogram[i], 2) / (reference.bHistogram[i] + data.bHistogram[i]);
 		}
-		return sum / 2.0f;
+		bDist = bDist / 2.0f;
+
+		float gDist = 0;
+		for (int i = 0; i < reference.gHistogram.size(); i++) {
+			bDist += pow(reference.gHistogram[i] - data.gHistogram[i], 2) / (reference.gHistogram[i] + data.gHistogram[i]);
+		}
+		gDist = gDist / 2.0f;
+
+		float rDist = 0;
+		for (int i = 0; i < reference.rHistogram.size(); i++) {
+			bDist += pow(reference.rHistogram[i] - data.rHistogram[i], 2) / (reference.rHistogram[i] + data.rHistogram[i]);
+		}
+		rDist = rDist / 2.0f;
+
+		return (bDist + gDist + rDist) / 3;
 	}
 
 } /* namespace nl_uu_science_gmt */

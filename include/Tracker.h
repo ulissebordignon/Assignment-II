@@ -77,7 +77,7 @@ namespace nl_uu_science_gmt
 			_active = !_active;
 		}
 
-		float chiSquared(const std::vector<float>&, const std::vector<float>&);
+		float chiSquared(const ColorModel&, const ColorModel&);
 
 		void projectVoxels(std::vector<std::vector<VoxelAttributes*>>&, const cv::Mat = cv::Mat());
 	};
