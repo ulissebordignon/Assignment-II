@@ -334,6 +334,7 @@ namespace nl_uu_science_gmt
 						va->label = labels.at<int>(j);
 					// if it hasn't, add projection and projected voxel to the respective vectors
 					visibleVoxels[key] = va;
+					voxels.erase(voxels.begin() + j);
 				}
 				else {
 					float distOld, distNew;
@@ -352,6 +353,7 @@ namespace nl_uu_science_gmt
 						va->voxel = voxels[j];
 						if (!labels.empty())
 							va->label = labels.at<int>(j);
+						voxels.erase(voxels.begin() + j);
 					}
 
 					cout << endl;
