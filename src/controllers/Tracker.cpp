@@ -41,6 +41,7 @@ namespace nl_uu_science_gmt
 		vector<vector<VoxelAttributes*>> visibleVoxelsMat;
 		
 		projectVoxels(visibleVoxelsMat);
+		vector < vector<Point2i> > points4Relabelling(_clusters_number);
 		
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 			vector<VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
@@ -81,8 +82,17 @@ namespace nl_uu_science_gmt
 
 				va->label = m;
 				va->voxel->color = _color_models[m]->color;
-				
 			}
+		}
+
+		vector<Point2i> centersVector;
+		for (int i = 0; i < _clusters_number; i++) {
+			int sumx = 0, sumy = 0;
+			for (int j = 0; j < points4Relabelling[i].size(); j++) {
+				sumx += points4Relabelling[i][j].x;
+				sumy += points4Relabelling[i][j].y;
+			}
+			centersVector.push_back(Point2i(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
 		}
 	}
 
