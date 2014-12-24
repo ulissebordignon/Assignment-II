@@ -45,15 +45,20 @@ namespace nl_uu_science_gmt
 		// update voxels' colors based on color model
 		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 		
+		// determine valid voxel projections
 		projectVoxels(visibleVoxelsMat);
+
 		vector < vector<Point2f> > points4Relabelling(_clusters_number);
-		vector <Point2f> centers4Clustering;
+		Mat centers4Clustering;
 		
+		// for each view
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 			map<float,VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
 			
+			// for all the valid projection
 			for (map<float, VoxelAttributes*>::iterator it = currentVoxels.begin(); it != currentVoxels.end(); it++) {
 
+				// detect color, make histogram
 				VoxelAttributes* va = it->second;
 				ColorModel* cm = new ColorModel();
 				cm->bHistogram.resize(26);
@@ -77,7 +82,7 @@ namespace nl_uu_science_gmt
 				float bestResult = FLT_MAX;
 				
 				for (int k = 0; k < _clusters_number; k++) {
-
+					// compare histogram to color models, select best result
 					float currentResult = chiSquared(_color_models[k], cm);
 					if (currentResult < bestResult) {
 						m = k;
@@ -85,6 +90,7 @@ namespace nl_uu_science_gmt
 					}
 				}
 
+				// update label according to the most suitable color model
 				va->label = m;
 				points4Relabelling[m].push_back(Point2f(va->voxel->x, va->voxel->y));
 				centers4Clustering.push_back(Point2f(va->voxel->x, va->voxel->y));
@@ -101,6 +107,7 @@ namespace nl_uu_science_gmt
 			}
 		}
 
+		// find centers for relabelling
 		for (int i = 0; i < _clusters_number; i++) {
 			int sumx = 0, sumy = 0;
 			for (int j = 0; j < points4Relabelling[i].size(); j++) {
@@ -115,15 +122,23 @@ namespace nl_uu_science_gmt
 		TermCriteria criteria;
 		criteria.maxCount = 10;
 
+		// cluster all the points and substitute each unrefined center with the closest cluster center
 		kmeans(centers4Clustering, _clusters_number, discard, criteria, 2, KMEANS_RANDOM_CENTERS, centers);
 
 		for (int i = 0; i < _clusters_number; i++) {
-			int b; 
-			for (int j = 0; j < _clusters_number; j++) {
-
+			int b;
+			float bestResult = FLT_MAX;
+			for (int j = i; j < _clusters_number; j++) {
+				float currentResult = sqrt(pow(centers.at<Point2f>(j).x - _unrefined_centers[i].back().x, 2) + pow(centers.at<Point2f>(j).y - _unrefined_centers[i].back().y, 2));
+				if (currentResult < bestResult) {
+					b = j;
+					bestResult = currentResult;
+				}
 			}
 			// compare to find best match to substitute to
+			_unrefined_centers[i].back() = centers.at<Point2f>(b);
 		}
+
 		
 		vector < vector<Point2f> > relabelledPoints(_clusters_number);
 		for (int i = 0; i < voxels.size(); i++) {
@@ -137,7 +152,7 @@ namespace nl_uu_science_gmt
 					closestCenterDst = currentCenterDst;
 				}
 			}
-			cout << closestCenterDst << endl;
+			// cout << closestCenterDst << endl;
 			voxels[i]->color = _color_models[c]->color;
 			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
 
