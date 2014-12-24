@@ -66,9 +66,9 @@ namespace nl_uu_science_gmt
 				
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
 
-				int blue = floor(intensity.val[0] / 51);
-				int green = floor(intensity.val[1] / 51);
-				int red = floor(intensity.val[2] / 51);
+				int blue = floor(intensity.val[0] / 10);
+				int green = floor(intensity.val[1] / 10);
+				int red = floor(intensity.val[2] / 10);
 
 				cm->bHistogram[blue] = 100;
 				cm->gHistogram[green] = 100;
@@ -316,9 +316,9 @@ namespace nl_uu_science_gmt
 				ColorModel* cm = _color_models[va->label];
 
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
-				int blue = floor(intensity.val[0]/51);
-				int green = floor(intensity.val[1]/51);
-				int red = floor(intensity.val[2]/51);
+				int blue = floor(intensity.val[0]/10);
+				int green = floor(intensity.val[1]/10);
+				int red = floor(intensity.val[2]/10);
 
 				cm->bHistogram[blue]++;
 				cm->gHistogram[green]++;
