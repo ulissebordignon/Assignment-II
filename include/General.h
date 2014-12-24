@@ -62,7 +62,7 @@ public:
 	static const std::string ConfigFile;
 
 	static bool fexists(const std::string &);
-
+	static float pointDistance(const cv::Point&, const cv::Point&);
 	static bool popup(const std::string &, const std::string &);
 	static void popupCallback(int, int, int, int, void *);
 };

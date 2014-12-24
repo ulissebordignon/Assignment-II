@@ -22,7 +22,7 @@ namespace nl_uu_science_gmt
 	const string General::CheckerboadVideo = "checkerboard.avi";
 	const string General::BackgroundVideoFile = "background.avi";
 	const string General::BackgroundImageFile = "background.png";
-	const string General::VideoFile = "3persons.avi";
+	const string General::VideoFile = "video.avi";
 	const string General::IntrinsicsFile = "intrinsics.xml";
 	const string General::CheckerboadCorners = "boardcorners.xml";
 	const string General::ConfigFile = "config.xml";
@@ -34,6 +34,10 @@ namespace nl_uu_science_gmt
 	{
 		ifstream ifile(filename.c_str());
 		return ifile.is_open();
+	}
+
+	float General::pointDistance(const Point& p1, const Point& p2) {
+		return sqrt(pow(p1.x - p2.x, 2) + pow(p1.y - p2.y, 2));
 	}
 
 	void General::popupCallback(int event, int x, int y, int, void* param) {

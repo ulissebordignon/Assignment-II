@@ -45,9 +45,10 @@ namespace nl_uu_science_gmt
 		// update voxels' colors based on color model
 		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 		
-		projectVoxels(visibleVoxelsMat);
-		vector < vector<Point2i> > points4Relabelling(_clusters_number);
+		projectVoxels(voxels, visibleVoxelsMat, Mat(), 900);
+		vector<vector<Point2i>> points4Relabelling(_clusters_number);
 		
+		// Assign labels to pixels based on color model
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 			map<float,VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
 			
@@ -90,22 +91,28 @@ namespace nl_uu_science_gmt
 			}
 		}
 
+		// Compute centers
 		for (int i = 0; i < _clusters_number; i++) {
 			int sumx = 0, sumy = 0;
 			for (int j = 0; j < points4Relabelling[i].size(); j++) {
 				sumx += points4Relabelling[i][j].x;
 				sumy += points4Relabelling[i][j].y;
 			}
-			_unrefined_centers[i].push_back(Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
+			Point2f center = Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size());
+			_unrefined_centers[i].push_back(center);
+			
 		}
 
-		vector < vector<Point2i> > relabelledPoints(_clusters_number);
+		// Relabel voxels based on distance to cluster centers
+		vector<vector<Point2i>> relabelledPoints(_clusters_number);
+		vector<int> count(_clusters_number);
 		for (int i = 0; i < voxels.size(); i++) {
 
 			float closestCenterDst = FLT_MAX;
 			int c;
 			for (int j = 0; j < _clusters_number; j++) {
-				float currentCenterDst = sqrt(pow(voxels[i]->x - _unrefined_centers[j].back().x, 2) + pow(voxels[i]->y - _unrefined_centers[j].back().y, 2));
+				Point voxel(voxels[i]->x, voxels[i]->y);
+				float currentCenterDst = General::pointDistance(voxel, _unrefined_centers[j].back());
 				if (currentCenterDst < closestCenterDst) {
 					c = j;
 					closestCenterDst = currentCenterDst;
@@ -114,24 +121,82 @@ namespace nl_uu_science_gmt
 			if (closestCenterDst < 1000) {
 				voxels[i]->color = _color_models[c]->color;
 				relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+				count[c]++;
 			}
 			else {
-				voxels[i]->color = _color_models[c]->color;
-				voxels[i]->color[3] = 0.f;
+				int lessPop = 0;
+				for (int j = 0; j < count.size(); j++) {
+					if (count[j] < count[lessPop])
+						lessPop = j;
+				}
+				voxels[i]->color = _color_models[lessPop]->color;
+				relabelledPoints[lessPop].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+				count[lessPop]++;
 			}
 		}
 
+		// Compute new centers
+		vector<Point2f> tmpCenters;
 		for (int i = 0; i < _clusters_number; i++) {
 			int sumx = 0, sumy = 0;
 			for (int j = 0; j < relabelledPoints[i].size(); j++) {
 				sumx += relabelledPoints[i][j].x;
 				sumy += relabelledPoints[i][j].y;
 			}
-			_refined_centers[i].push_back(Point2f(sumx / relabelledPoints[i].size(), sumy / relabelledPoints[i].size()));
+			int size = relabelledPoints[i].size();
+			if (size == 0) size = 1;
+			tmpCenters.push_back(Point2f(sumx / size, sumy / size));
 		}
 
-	}
+		// Refine centers based on centers from previous frame
+		for (int i = 0; i < tmpCenters.size(); i++) {
+			int size = _refined_centers[i].size();
+			if (size < 2)
+				break;
 
+			Point2f previousCenter = _refined_centers[i][size - 2];
+			if (General::pointDistance(tmpCenters[i], previousCenter) > 400)
+				tmpCenters[i] = previousCenter;
+		}
+
+		// Label voxels once again based on distance to new centers
+		vector<vector<Point2i>> rerelabelledPoints(_clusters_number);
+		for (int i = 0; i < voxels.size(); i++) {
+
+			float closestCenterDst = FLT_MAX;
+			int c;
+			for (int j = 0; j < _clusters_number; j++) {
+				Point voxel(voxels[i]->x, voxels[i]->y);
+				float currentCenterDst = General::pointDistance(voxel, tmpCenters[j]);
+				if (currentCenterDst < closestCenterDst) {
+					c = j;
+					closestCenterDst = currentCenterDst;
+				}
+			}
+			if (closestCenterDst > 700) {
+				voxels[i]->color = Scalar(0.5f, 0.5f, 0.5f, 0.5f);
+				continue;
+			}
+			voxels[i]->color = _color_models[c]->color;
+			rerelabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+		}
+
+		// Compute final centers
+		for (int i = 0; i < _clusters_number; i++) {
+			int sumx = 0, sumy = 0;
+			for (int j = 0; j < rerelabelledPoints[i].size(); j++) {
+				sumx += rerelabelledPoints[i][j].x;
+				sumy += rerelabelledPoints[i][j].y;
+			}
+			int size = rerelabelledPoints[i].size();
+
+			_refined_centers[i].push_back(Point2f(sumx / size, sumy / size));
+		}
+	}
+	
+	/**
+	* Create histograms color model
+	*/
 	void Tracker::createColorModel() {
 		string winName = "Frame selection";
 		namedWindow(winName);
@@ -181,7 +246,7 @@ namespace nl_uu_science_gmt
 
 		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 
-		projectVoxels(visibleVoxelsMat, labels);
+		projectVoxels(voxels, visibleVoxelsMat, labels, 900);
 
 		// create color model for each label, using all views
 
@@ -302,10 +367,10 @@ namespace nl_uu_science_gmt
 		cout << " done!" << endl;
 	}
 
-	void Tracker::projectVoxels(vector<map<float,VoxelAttributes*>>& outputVector, const Mat labels) {
-		
-		Reconstructor &rec = _scene3d.getReconstructor();
-		vector<Reconstructor::Voxel*> voxels = rec.getVisibleVoxels();
+	/**
+	* project voxels to views paying attention to occlusions
+	*/
+	void Tracker::projectVoxels(vector<Reconstructor::Voxel*> voxels, vector<map<float,VoxelAttributes*>>& outputVector, const Mat labels, const int heightLimit) {
 
 		// look for non-occluded voxels for each view
 		for (int i = 0; i < _cameras.size(); i++){
@@ -317,6 +382,11 @@ namespace nl_uu_science_gmt
 			// for each voxel
 			for (int j = 0; j < voxels.size(); j++){
 
+				if (voxels[j]->z < heightLimit) {
+					voxels.erase(voxels.begin() + j);
+					j--;
+					continue;
+				}
 				// determine the projection
 				Point2i projection;
 
@@ -335,6 +405,7 @@ namespace nl_uu_science_gmt
 					// if it hasn't, add projection and projected voxel to the respective vectors
 					visibleVoxels[key] = va;
 					voxels.erase(voxels.begin() + j);
+					j--;
 				}
 				else {
 					float distOld, distNew;
@@ -350,13 +421,13 @@ namespace nl_uu_science_gmt
 						pow(voxels[j]->z - camLocation.z, 2));
 					// if it has, and the new voxel is closer to the camera than the old one, substitute
 					if (distOld > distNew) {
+						Reconstructor::Voxel* tmp = va->voxel;
 						va->voxel = voxels[j];
 						if (!labels.empty())
 							va->label = labels.at<int>(j);
 						voxels.erase(voxels.begin() + j);
+						voxels.push_back(tmp);
 					}
-
-					cout << endl;
 				}
 
 			} // end voxel loop
@@ -367,6 +438,9 @@ namespace nl_uu_science_gmt
 
 	}
 
+	/**
+	* Compute chi-quared distance between two color models
+	*/
 	float Tracker::chiSquared(const ColorModel* reference, const ColorModel* data) {
 
 		assert(colorModel.size() == colorHistogram.size());

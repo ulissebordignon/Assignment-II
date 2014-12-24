@@ -57,6 +57,8 @@ namespace nl_uu_science_gmt
 		void createColorModel();
 		void saveColorModel();
 		void loadColorModel();
+		float chiSquared(const ColorModel*, const ColorModel*);
+		void projectVoxels(std::vector<Reconstructor::Voxel*>, std::vector<std::map<float, VoxelAttributes*>>&, const cv::Mat = cv::Mat(), const int = 0);
 
 	public:
 		Tracker(const std::vector<Camera*> &, const std::string&, Scene3DRenderer&, int = 3);
@@ -80,17 +82,18 @@ namespace nl_uu_science_gmt
 			_active = !_active;
 		}
 
-		float chiSquared(const ColorModel*, const ColorModel*);
-
 		std::vector<std::vector<cv::Point2f>> getRefinedCenters() {
 			return _refined_centers;
+		}
+
+		std::vector<std::vector<cv::Point2f>> getUnrefinedCenters() {
+			return _unrefined_centers;
 		}
 
 		std::vector<ColorModel*> getColorModels() {
 			return _color_models;
 		}
 
-		void projectVoxels(std::vector<std::map<float,VoxelAttributes*>>&, const cv::Mat = cv::Mat());
 	};
 
 } /* namespace nl_uu_science_gmt */

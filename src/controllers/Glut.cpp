@@ -847,7 +847,7 @@ namespace nl_uu_science_gmt
 			// glColor4f(0.5f, 0.5f, 0.5f, 0.5f);
 			Scalar color = voxels[v]->color;
 
-			glColor4f(color[0],color[1],color[2],color[3]);
+			glColor4f(color[0], color[1], color[2], color[3]);
 			glVertex3f((GLfloat)voxels[v]->x, (GLfloat)voxels[v]->y, (GLfloat)voxels[v]->z);
 		}
 
@@ -940,6 +940,18 @@ namespace nl_uu_science_gmt
 			glEnd();
 			glPopMatrix();
 		}
+		
+		vector<vector<Point2f>> uc = tracker.getUnrefinedCenters();
+		glPointSize(10.0f);
+		glPushMatrix();
+		glBegin(GL_POINTS);
+		for (int i = 0; i < uc.size(); i++) {
+			Scalar color = tracker.getColorModels()[i]->color;
+			glColor4f(color[0], color[1], color[2], color[3]);
+			glVertex3f(uc[i].back().x, uc[i].back().y, 0);
+		}
+		glEnd();
+		glPopMatrix();
 	}
 
 
