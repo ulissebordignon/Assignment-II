@@ -65,6 +65,8 @@ namespace nl_uu_science_gmt
 
 		void update();
 
+		void saveTrack();
+
 		const std::vector<Camera*>& getCameras() const
 		{
 			return _cameras;

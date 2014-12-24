@@ -162,9 +162,6 @@ namespace nl_uu_science_gmt
 				relabelledPoints[lessPop].push_back(Point2f(voxels[i]->x, voxels[i]->y));
 				count[lessPop]++;
 			}
-
-			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
-
 		}
 
 		// Compute new centers
@@ -499,6 +496,23 @@ namespace nl_uu_science_gmt
 		rDist = rDist / 2.0f;
 
 		return (bDist + gDist + rDist) / 3;
+	}
+
+
+	/**
+	* Saves cluster centers to file
+	*/
+	void Tracker::saveTrack() {
+		
+		ofstream outputFile;
+		outputFile.open(_data_path + "track.txt", ios::app);
+
+		for (int i = 0; i < _color_models.size(); i++) {
+			outputFile << _refined_centers[i].back() << "\t";
+		}
+
+		outputFile << endl;
+		outputFile.close();
 	}
 
 } /* namespace nl_uu_science_gmt */

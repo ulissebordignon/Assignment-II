@@ -940,6 +940,9 @@ namespace nl_uu_science_gmt
 			glEnd();
 			glPopMatrix();
 		}
+
+		// Optional: save cluster centers in data/track.txt
+		// tracker.saveTrack();
 	}
 
 
