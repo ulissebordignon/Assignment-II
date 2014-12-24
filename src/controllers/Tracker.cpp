@@ -46,7 +46,8 @@ namespace nl_uu_science_gmt
 		vector<map<float,VoxelAttributes*>> visibleVoxelsMat;
 		
 		projectVoxels(visibleVoxelsMat);
-		vector < vector<Point2i> > points4Relabelling(_clusters_number);
+		vector < vector<Point2f> > points4Relabelling(_clusters_number);
+		vector <Point2f> centers4Clustering;
 		
 		for (int i = 0; i < visibleVoxelsMat.size(); i++) {
 			map<float,VoxelAttributes*> currentVoxels = visibleVoxelsMat[i];
@@ -62,9 +63,9 @@ namespace nl_uu_science_gmt
 				
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
 
-				int blue = floor(intensity.val[0] / 10);
-				int green = floor(intensity.val[1] / 10);
-				int red = floor(intensity.val[2] / 10);
+				int blue = floor(intensity.val[0] / 51);
+				int green = floor(intensity.val[1] / 51);
+				int red = floor(intensity.val[2] / 51);
 
 				cm->bHistogram[blue] = 100;
 				cm->gHistogram[green] = 100;
@@ -86,7 +87,17 @@ namespace nl_uu_science_gmt
 
 				va->label = m;
 				points4Relabelling[m].push_back(Point2f(va->voxel->x, va->voxel->y));
+				centers4Clustering.push_back(Point2f(va->voxel->x, va->voxel->y));
 				va->voxel->color = _color_models[m]->color;
+				
+				/*if (bestResult < 1200) {
+					voxels[i]->color = _color_models[m]->color;
+					points4Relabelling[m].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+				}
+				else {
+					voxels[i]->color = _color_models[m]->color;
+					voxels[i]->color[3] = 0.f;
+				}*/
 			}
 		}
 
@@ -99,7 +110,22 @@ namespace nl_uu_science_gmt
 			_unrefined_centers[i].push_back(Point2f(sumx / points4Relabelling[i].size(), sumy / points4Relabelling[i].size()));
 		}
 
-		vector < vector<Point2i> > relabelledPoints(_clusters_number);
+
+		Mat discard, centers;
+		TermCriteria criteria;
+		criteria.maxCount = 10;
+
+		kmeans(centers4Clustering, _clusters_number, discard, criteria, 2, KMEANS_RANDOM_CENTERS, centers);
+
+		for (int i = 0; i < _clusters_number; i++) {
+			int b; 
+			for (int j = 0; j < _clusters_number; j++) {
+
+			}
+			// compare to find best match to substitute to
+		}
+		
+		vector < vector<Point2f> > relabelledPoints(_clusters_number);
 		for (int i = 0; i < voxels.size(); i++) {
 
 			float closestCenterDst = FLT_MAX;
@@ -111,14 +137,10 @@ namespace nl_uu_science_gmt
 					closestCenterDst = currentCenterDst;
 				}
 			}
-			if (closestCenterDst < 1000) {
-				voxels[i]->color = _color_models[c]->color;
-				relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
-			}
-			else {
-				voxels[i]->color = _color_models[c]->color;
-				voxels[i]->color[3] = 0.f;
-			}
+			cout << closestCenterDst << endl;
+			voxels[i]->color = _color_models[c]->color;
+			relabelledPoints[c].push_back(Point2f(voxels[i]->x, voxels[i]->y));
+
 		}
 
 		for (int i = 0; i < _clusters_number; i++) {
@@ -219,9 +241,9 @@ namespace nl_uu_science_gmt
 				ColorModel* cm = _color_models[va->label];
 
 				Vec3b intensity = frame.at<Vec3b>(va->projection);
-				int blue = floor(intensity.val[0]/10);
-				int green = floor(intensity.val[1]/10);
-				int red = floor(intensity.val[2]/10);
+				int blue = floor(intensity.val[0]/51);
+				int green = floor(intensity.val[1]/51);
+				int red = floor(intensity.val[2]/51);
 
 				cm->bHistogram[blue]++;
 				cm->gHistogram[green]++;
@@ -355,8 +377,6 @@ namespace nl_uu_science_gmt
 							va->label = labels.at<int>(j);
 						voxels.erase(voxels.begin() + j);
 					}
-
-					cout << endl;
 				}
 
 			} // end voxel loop
